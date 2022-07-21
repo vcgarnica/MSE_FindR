@@ -1,0 +1,13 @@
+name: MSE_FindR
+title: MSE_FindR
+username:
+account: garnica
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6648590
+bundleId: 6119523
+url: https://garnica.shinyapps.io/MSE_FindR/
+when: 1658410913.44196
+lastSyncTime: 1658410913.44197
+asMultiple: FALSE
+asStatic: FALSE
