@@ -1,3 +1,8 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
 # MSE FindR Tutorial
 
 `MSE FindR` is a user-friendly R shiny web app tool to estimate the pooled variance ($S_p^2$; i.e., $MSE$) from ANOVA experiments using information such as treatment means, $\alpha$ significance level, number of replicates, and post hoc test results in balanced, randomized trials. The application is hosted at [https://garnica.shinyapps.io/MSE_FindR/](https://garnica.shinyapps.io/MSE_FindR/).
