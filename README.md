@@ -1,6 +1,6 @@
 # MSE FindR Tutorial
 
-`MSE FindR` is a user-friendly R shiny web app tool for estimating the pooled variance ($S_p^2$; i.e., $MSE$) from ANOVA-type, balanced, randomized experiments when only treatment means, $\alpha$ significance level, number of replicates, and post hoc test results have been reported. The application is hosted at [https://garnica.shinyapps.io/MSE_FindR/](https://garnica.shinyapps.io/MSE_FindR/).
+`MSE FindR` is a user-friendly R shiny web app tool for estimating the pooled variance ($S_p^2$ ; i.e., MSE) from ANOVA-type, balanced, randomized experiments when only treatment means, $\alpha$ significance level, number of replicates, and post hoc test results have been reported. The application is hosted at [https://garnica.shinyapps.io/MSE_FindR/](https://garnica.shinyapps.io/MSE_FindR/).
 
 The tool expands on concepts published in [Ngugi et al., 2011](https://apsjournals.apsnet.org/doi/abs/10.1094/PHYTO-08-10-0221) by incorporating additional post hoc tests (Tukey’s HSD, Bonferroni and Šidák correction for multiple comparisons, and Scheffé’s test obtained from `agricolae`, `emmeans`, and `multcomp` R packages) and a variety of experimental designs commonly used in the agricultural sciences. 
 
