@@ -1,6 +1,5 @@
 ---
-title: 'MSE FindR: a R shiny tool to estimate mean square error from balanced randomized
-  trials using treatment mean and post hoc results'
+title: 'MSE FindR: a R shiny tool to estimate mean square error from scientific reports using treatment mean and post hoc results'
 tags:
 - R
 - Shiny
@@ -10,8 +9,8 @@ tags:
 - Multiple comparison tests
 date: "21 July 2022"
 output:
-  word_document: default
   pdf_document: default
+  word_document: default
 authors:
 - name: Vinicius Castelli Garnica
   orcid: 0000-0001-6351-4357
@@ -39,64 +38,59 @@ affiliations:
 
 # Summary
 
-Research synthesis methods such as meta-analysis rely on either individual participant data or appropriate summary statistics for implementation. A common problem arises when a measurement of variability is not explicitly included in scientific manuscripts or trial reports, leading to potential publication bias from having to omit otherwise credible studies from analysis. `MSE FindR` is a user-friendly R shiny web app tool to estimate the pooled variance ($S_p^2$; i.e., $MSE$) from ANOVA using information such as treatment means, $\alpha$ significance level, number of replicates, and the post hoc test results in balanced, randomized trials. Users upload a CSV file containing required information into the application, then choose an experimental design (completely randomized, randomized complete block, Latin square, two-way factorial, and split-plot designs) and the post hoc test (Fisher's $LSD$, Tukey’s $HSD$, Scheffé’s, and multiple comparison tests with Bonferroni or Šidák corrections) that were applied in the analysis of underlying data. `MSE FindR` then proceeds with the designated information to estimate $MSE$ that can subsequently be used to calculate variability measurements required in meta-analysis methods. Validation performed on simulated data demonstrated a strong correlation (0.66 $\leq$ $\rho$ $\leq$ 0.98) between ANOVA and `MSE FindR` estimated variances. With this tool, researchers can conveniently obtain an estimate of variability from published reports with missing information, enabling the inclusion of studies in future quantitative review of research data.
+Research synthesis methods such as meta-analysis rely on either individual participant
+data or appropriate summary statistics for implementation. A commonly encountered problem is when a measurement of variability is not explicitly included among the summary statistics in published studies, leading to potential publication bias and loss of statistical power from having to omit otherwise credible research from analysis. `MSE FindR` is a user-friendly R shiny web app tool for estimating the pooled variance $\hat\sigma^2$ in ANOVA type studies, contingent on the study designs being balanced and randomized. It does so by using commonly reported information such as treatment means, $\alpha$ significance level, number of replicates, and post hoc test results to obtain an estimate of $MSE$ for each study. Users upload a CSV file containing the relevant information reported in the study, then specify the experimental design (Latin square, completely randomized, randomized complete block, two-way factorial, and split-plot designs) as well as the post hoc test (Fisher's LSD, Tukey’s HSD, Scheffé’s, and multiple comparison tests with Bonferroni or Šidák corrections) applied in the analysis of underlying data. `MSE FindR` then proceeds with that information to obtain an estimate of $MSE$, that can subsequently be used to calculate variability measurements required in meta-analysis. Validation testing demonstrated a moderate to strong correlation (0.440 $\leq$ $\rho$ $\leq$ 0.996) between variance estimated during ANOVA and that obtained when treatment means and post hoc tests were submitted to `MSE FindR` algorithms. With this tool, researchers can conveniently obtain an estimate of variability from published summary reports, enabling the inclusion of studies in future quantitative review of research data.
 
 
 # Statement of need
 
-In many situations in the synthesis of quantitative research, researchers have limited access to the individual participant data used to generate the summary information presented in a scientific manuscript. When data and statistical procedures are fully available, validation and replication of research results can be conducted, and the reuse of existing research data can further enhance future inferential analysis, for example, of product efficacy across multiple independent studies.
+In many cases involving the synthesis of quantitative research, researchers have limited access to the data that were used in each individual study to generate the reported summary information or statistics. When data and statistical procedures are fully available, validation and replication of research results can be conducted, and the reuse of existing research data can further enhance future inferential analysis (e.g., of a product’s efficacy assessed across multiple independent studies).
 
-In the absence of individual participant data, the standard approach to meta-analysis of continuous outcomes relies on metrics such as the mean and either the standard deviation, variance, or standard error values for each treatment group [@Higgins2011]. A common problem arises when none of these critical metrics are explicitly included in the scientific manuscript nor can be directly estimated from supporting information in the trial report. In such situations, the systematic reviewer can either omit the trial from the meta-analysis, which generates additional concerns over the introduction of potential bias and loss of precision, or alternatively, find a method for deriving the missing information based on the supporting information embedded in the trial report [@Weir2018]. Supporting information commonly included in scientific reports of agricultural journals are, for example, the least significant difference value ($LSD$) from Fisher’s test, the honest significant difference value ($HSD$) from Tukey’s test, the coefficient of variation ($CV$), $p-value$, among others. However, in several instances, critical or supporting information are missing, making the inclusion of these trials in future meta-analyses burdensome.
+When the individual study data are absent, standard meta-analytic approaches rely on reported metrics such as the mean and some measure of variability (either the standard deviation, variance, or standard error values for each treatment group [@Higgins2011]. A common problem arises when either none of these critical variability metrics are explicitly included in the published report, or can be directly estimated from supporting information in the report. In such situations, the systematic reviewer can choose either omit the trial from the meta-analysis, which generates additional concerns over the introduction of potential bias and loss of precision; or alternatively, estimate the missing variance information based on other information embedded in the report [@Weir2018]. Supporting information included in agricultural journal articles are typically Fisher’s least significant difference value (LSD), Tukey’s honest significant difference value (HSD), the coefficient of variation (CV), and the p-value, among others. 
 
-In ANOVA, one of the assumptions is that the variance is constant across treatment groups in the data and the pooled variance ($S_p^2$; i.e., $MSE$) is an unbiased estimate of the population variance ($\sigma^2$). Note that $MSE$ is a single value that describes the variability of all groups means and coincides with the residual variance in one-way ANOVA experiments. Thus, the $MSE$ is a valid measurement to calculate the standard deviation, a critical metric in quantitative research synthesis [@Koricheva2013]. Herein, $MSE$ and $\hat\sigma^2$ will be used interchangeably. 
+One of the assumptions in ANOVA is that the variance is constant across the treatment groups and the pooled variance ($\hat\sigma^2$; i.e., $MSE$) is an unbiased estimate of the population variance ($\sigma^2$). Note that $MSE$ is a single value that describes the assumed common variability of all treatments and is equivalent to the residual variance ANOVA type studies. Given the $MSE$, one can of course then calculate the standard deviation, a critical metric used in quantitative research synthesis [@Koricheva2013]. Herein, $MSE$ and $\hat\sigma^2$ will be used interchangeably. 
 
-Post hoc tests (also known as mean separation or multiple comparison tests) are extensively adopted in the analysis of results of randomized trials in agricultural research studies. In post hoc procedures, the pairwise mean differences are compared against a test statistic, which is computed using, among other information, $\hat\sigma^2$. For any study with a significant post hoc test within a collection of means, the actual value of a test statistic, $LSD$ for example, ranges between the largest nonsignificant difference and the smallest significant difference of the treatment means. @Ngugi2011 outlined this concept and proposed a method to obtain $\hat\sigma^2$ from trials with missing estimates of variability by computing values of these finite boundaries above and averaging them for a parameter called $ELSD$, in Fisher’s $LSD$ test. The $ELSD$ is then imputed in the respective post hoc test formula where the $\hat\sigma^2$ is to be estimated [@Ngugi2011].
 
-`MSE FindR` consists of multiple algorithms and post hoc functions developed to obtain $\hat\sigma^2$ from ANOVA studies with missing variability metrics that, alternatively, report treatment means, post hoc tests, and other basic information. The tool expands on concepts published in @Ngugi2011 by incorporating additional post hoc tests (Tukey’s $HSD$, Bonferroni and Šidák correction for multiple comparisons, and Scheffé’s test obtained from @agricolae2021, @emmeans2022, and @multcomp2008 R packages) and a variety of experimental designs commonly used in agricultural sciences.
+Post hoc tests (also known as means separation or multiple comparison tests) are extensively used in the analysis of randomized trials in agricultural research studies. In post hoc procedures, the pairwise mean differences are compared against a test statistic, which is based (in part) on $\hat\sigma^2$. For any study with a significant post hoc test within a collection of means, the actual value of a test statistic, Fisher's LSD for example, ranges between the largest nonsignificant difference and the smallest significant difference of the treatment means. @Ngugi2011 outlined this concept and proposed a method to obtain $\hat\sigma^2$ from trials with missing estimates of variability by computing values of these finite boundaries above and averaging them for a parameter called estimated LSD (ELSD), in Fisher’s LSD procedure. The ELSD is then used in the respective post hoc test formula where the $\hat\sigma^2$ is to be estimated.
+
+Building on this concept, `MSE FindR` was developed to quickly obtain an estimate of $\hat\sigma^2$ from ANOVA studies with missing variability metrics that, alternatively, report treatment means, post hoc tests, and other basic information. The tool is equipped with a variety of post hoc tests (Fisher's LSD, Tukey’s HSD, Bonferroni and Šidák correction for multiple comparisons, and Scheffé’s test obtained from `agricolae`, `emmeans`, and `multcomp` R packages) and experimental designs commonly used in agricultural sciences.
 
 
 
 # Software implementation
 
-`MSE FindR` comprises four main modules (Disclosure, Upload file, Separate means and letters, and Estimator) arranged in an intuitive interface that guides the user through the analysis (Figure 1). 
+`MSE FindR` uses an intuitive interface that guides the user through the analysis (Figure 1). In its current version, the tool comprises four main modules (Disclosure, Upload file, Separate means and letters, and Estimator) and supports the estimation of $\hat\sigma^2$ for post hocs and experimental designs in Table 1.
 
 ![MSE FindR conceptual flowchart highlighting the inputs and estimation for randomized complete block designs analyzed with Fisher's LSD test.](diagram.png){width=60%}
 
-In its current version, the tool supports the estimation of $\hat\sigma^2$ for randomized, balanced trials arranged in the following experimental designs:
+Table 2. Experimental designs and post hoc tests supported by `MSE FindR`.
 
-* Completely randomized design (CRD)
-* Randomized complete block design (RCBD)
-* Latin Square
-* Two-way complete factorial as CRD
-* Two-way complete factorial as RCBD
-* Split-plot arranged as CRD
-* Split-plot arranged as RCBD
-
-and post hoc tests:
-
-* Fisher's $LSD$
-* Tukey's $HSD$
-* Bonferroni correction for multiple comparisons
-* Šidák correction for multiple comparisons
-* Scheffé's test
+|           Experimental design             |      Post hoc test            
+|-------------------------------------------|---------------------------------------------------|
+| Latin Square                              |   Fisher's LSD                                    |
+| Completely randomized design (CRD)        |   Tukey's HSD                                     |
+| Randomized complete block design (RCBD)   |   Bonferroni correction for multiple comparisons  |     
+| Two-way complete factorial as CRD         |   Šidák correction for multiple comparisons       |
+| Two-way complete factorial as RCBD        |   Scheffé's test                                  |
+| Split-plot arranged as CRD                |                                                   |
+| Split-plot arranged as RCBD               |                                                   |
 
 
-
-![Visual assessment of the agreement between $\hat\sigma^2$ obtained from ANOVA versus MSE FindR algorithm. A and B, randomized complete block design analyzed with Fisher's LSD and Tukey's HSD, respectively, C, two-way factorial design as randomized complete block design analyzed with Bonferroni correction for multiple comparisons, and D, split-plot design as randomized complete block design analyzed with Šidák correction for multiple comparisons. Blue line indicates the linear regression line.](plot.png){width=90%}
 
 
 
 # Performance
 
+In order to access `MSE FindR` robustness, we simulated 5000 trials containing individual participant across each experimental design supported by the tool. Simulations were performed with $\alpha$ set at 0.05 and varying treatment effects sizes, levels for A and B (in parenthesis, when applicable), and replicates or blocks (3 to 5 – except Latin square). Each trial containing individual participant was then submitted to ANOVA and subsequently, $\hat\sigma^2$ was extracted for future comparisons. Treatment means and post hoc results were obtained for trials with significant treatment effect, based on ANOVA results, which were submitted, along with expecific experimental design information, to `MSE FindR` algorithms. Table 2 presents Pearson’s correlation coefficients between $\hat\sigma^2$ obtained from ANOVA and `MSE FindR` for experimental designs, treatment structure, and post hoc tests supported by the tool.  
 
-Table 2 presents Pearson’s correlation coefficients for all methods and experimental designs handled by `MSE FindR`. Approximately 5000 trial simulations were performed with $\alpha$ set at 0.05 and varying treatment effect sizes, levels for A and B (in parenthesis), and replicates or blocks (3 to 5 – except Latin square design).
 
 Table 2. Pearson’s correlation coefficients measuring the agreement between $\hat\sigma^2$ obtained from ANOVA and `MSE FindR` for experimental designs, treatment structure, and post hoc tests.
+
 
 | Experimental design  |      Factor of interest            | Post hoc test                                               |
 |----------------------|------------------------------------|--------------|-------------|------------|-------|-----------|
 |                      |                                    | Fisher's LSD | Tukey's HSD | Bonferroni | Šidák | Scheffé's |
-| CRD                  | A (4–16)                           | 0.905        |    0.915    |    0.906   | 0.906 |   0.902   |
+| CRD                  | A (4–16)                           | 0.905        |    0.915    |    0.906   | 0.907 |   0.902   |
 | RBCD                 | A (4–16)                           | 0.945        |    0.935    |    0.938   | 0.937 |   0.928   |
 | Latin square         | A (4–8)                            | 0.868        |    0.908    |    0.919   | 0.919 |   0.916   |
 | 2-way factorial CRD  | A (4–6) × B (4–5)                  | 0.996        |    0.988    |    0.986   | 0.986 |   0.960   |
@@ -111,7 +105,11 @@ Table 2. Pearson’s correlation coefficients measuring the agreement between $\
 | Split-plot RCBD      | B (4–6) within A (4–5)             | 0.925        |    0.897    |    0.893   | 0.895 |   0.881   |
 
 
-Based on simulated data, a strong agreement between $\hat\sigma^2$ obtained from ANOVA and `MSE FindR` was observed for one-way designs and 2-way designs when interaction A × B are included. Conversely, less agreement is observed for two-way designs with one factor omitted from the analysis, due to the limited information available to estimate $ELSD$ and $\hat\sigma^2$ under such scenarios.Noteworthy, the precision of $\hat\sigma^2$ estimation increases as the number of levels in the factor increases (data not shown).
+A strong agreement between $\hat\sigma^2$ obtained from ANOVA and MSE FindR was observed for one-way designs or 2-way designs when both factors A and B, or similarly, A × B are included. Conversely, less agreement is observed for two-way designs with one factor omitted from the analysis, due to the limited information available to estimate $\hat\sigma^2$ (Table 2 and Figure 2). It should be noted that the precision of $\hat\sigma^2$ estimation increases as the number of levels in the factor of interest increases (data not shown).
+
+![Agreement between $\hat\sigma^2$ obtained from ANOVA versus MSE FindR. A and B, RCBD analyzed with Fisher's LSD and Tukey's HSD, respectively, C, two-way factorial design as RCBD analyzed with Bonferroni correction for multiple comparisons, and D, split-plot design as RCBD analyzed with Šidák correction for multiple comparisons. The blue line indicates the linear regression line. ](plot.png){width=90%}
+
+
 
 
 # Availability and Community Guidelines

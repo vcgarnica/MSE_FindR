@@ -54,7 +54,7 @@ Figure 2. Column 'y' before and after treatment via separate means and letters m
 
 ### Input
 
-First, users must only assign trials with the same *experimental design*, *post hoc test*, $\alpha$ *significance level*, and *treatment structure* to the CVS input file. Incorrect $\hat\sigma^2$ estimations can result from assigning trials with incompatible information to the same CSV file.
+First, users must only assign trials with the same *experimental design*, *post hoc test*, $\alpha$ *significance level*, and *treatment structure* to the CVS input file. Incorrect $\hat\sigma^2$ estimations can result from assigning trials with incompatible information to the same CVS file.
 
 Example files pertaining to the minimum required information for major experimental designs are available within the Shiny application. Users are encouraged to download example files and familiarize themselves with the required information before proceeding with CSV input file assembly.
 
@@ -84,7 +84,7 @@ When A × B interaction is statistically significant:
 
 ### Selections
 
-In the Estimator module, users can interactively choose columns from the uploaded CSV file to match specific criteria required by the tool. **NOTE: Erroneous assignment of columns in this step will result in incorrect $\hat\sigma^2$ estimations.** 
+In the Estimator module, users can interactively choose columns from the uploaded CSV file to match specific criteria required by the tool. **NOTE: Erroneous assignment of columns in this step will result in incorrect estimations.** 
 
 For Latin square designs, the simplest experimental design available in `MSE FindR`, the CSV input file must contain the following columns, named at user's preferences:
 
