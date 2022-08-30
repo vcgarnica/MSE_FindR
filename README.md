@@ -6,7 +6,7 @@ The tool expands on concepts published in [Ngugi et al., 2011](https://apsjourna
 
 `MSE FindR` uses an intuitive interface that guides the user through the analysis (Figure 1). 
 
-![legend](https://github.com/vcgarnica/MSE_FindR/blob/main/Paper/diagram.png)
+![legend](https://github.com/vcgarnica/MSE_FindR/blob/main/Images/workflow.png)
 Figure 1. MSE FindR conceptual flowchart highlighting the inputs and estimation for randomized complete block designs analyzed with Fisher's LSD test.
 
 In its current version, the tool supports the estimation of $\hat\sigma^2$ for the following experimental designs:
@@ -43,7 +43,7 @@ Only standard CSV formats are accepted by the application. The default is comma 
 
 Often, treatment means and post hoc test results are combined in the same column of a CSV file. This is a common issue when the original trial report is available as a PDF file and users convert it to XLSX to optimize data assembly time. Additionally, there have been situations where authors report abbreviated post hoc letters (ex. “a-c” instead of “abc” or “f-j” instead of “fghij”) that could be expanded for more clarity on statistically similar results within a trial.
 
-![Legend](https://github.com/vcgarnica/MSE_FindR/blob/main/Paper/sep.png)
+![Legend](https://github.com/vcgarnica/MSE_FindR/blob/main/Images/sep.png)
 Figure 2. Column 'y' before and after treatment via separate means and letters module. Note new clean_means and clean_letters columns.
 
 
