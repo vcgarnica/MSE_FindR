@@ -1,8 +1,3 @@
----
-output:
-  word_document: default
-  html_document: default
----
 # MSE FindR Tutorial
 
 ## Introduction
@@ -230,7 +225,7 @@ Alternatively, if the collection of trials was arranged as a two-way split-plot 
 
 After column selections have been made and the estimate button pressed, a download button along with the results will be displayed. Users can export the file containing `MSE FindR` estimates of degrees of freedom and $\hat\sigma^2$ for each trial along with information previously included in the original CSV file. 
 
-Obs.: users may check whether $\hat\sigma^2$ has been correctly estimated by hand-calculating the degrees of freedom for a few trials and comparing that value to `MSE FindR` degrees of freedom estimates. At this point, users should know that only one $\hat\sigma^2$ value is estimated for each trial.
+Obs.: users may check whether $\hat\sigma^2$ has been correctly estimated by hand-calculating the degrees of freedom for a few trials and comparing that value to `MSE FindR` degrees of freedom estimates. At this point, users should know that only one $\hat\sigma^2$ value is estimated for each trial. Additionally, `MSE FindR` returns `NA` for non-significant post hoc test results (e.g. all letters are the same in a trial).
 
 
 # Technical details

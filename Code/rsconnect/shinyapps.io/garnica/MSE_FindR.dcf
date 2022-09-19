@@ -5,9 +5,7 @@ account: garnica
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6648590
-bundleId: 6119523
+bundleId: 6316483
 url: https://garnica.shinyapps.io/MSE_FindR/
-when: 1658410913.44196
-lastSyncTime: 1658410913.44197
-asMultiple: FALSE
-asStatic: FALSE
+when: 1663597821.40861
+lastSyncTime: 1663597821.40862
