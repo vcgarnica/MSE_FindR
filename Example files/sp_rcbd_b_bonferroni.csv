@@ -1,4 +1,4 @@
-trial_id,trt_B,n.trt_A,n.block,y,bonferroni_letters
+trial_id,fertilizer,n.cultivar,n.block,yield,bonferroni_letters
 1,B,3,4,62.2, a 
 1,C,3,4,66.4, ab
 1,E,3,4,68, ab

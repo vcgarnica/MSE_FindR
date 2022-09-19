@@ -1,4 +1,4 @@
-trial_id,trt_A,n.block,y,fisher_letters
+trial_id,fertilizer,n.block,yield,fisher_letters
 1,A,5,55.5,a
 1,B,5,50.2,ab
 1,C,5,49.4,abc

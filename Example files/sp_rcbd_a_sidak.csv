@@ -1,4 +1,4 @@
-trial_id,trt_A,n.trt_B,n.block,y,sidak_letters
+trial_id,fertilizer,n.cultivar,n.block,yield,sidak_letters
 1,C,3,3,47.8, a
 1,D,3,3,50.3, a
 1,B,3,3,51.5, a

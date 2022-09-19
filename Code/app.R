@@ -169,6 +169,7 @@ separators <- list("Fisher's LSD",
 
 # Example files
 rcbd_fisher_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/rcbd_fisher.csv"
+latin_fisher_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/latin_fisher.csv"
 factorial_rcbd_a_fisher_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/factorial_rcbd_a_fisher.csv"
 factorial_rcbd_ab_scheffe_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/factorial_rcbd_ab_scheffe.csv"
 sp_rcbd_a_sidak_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/sp_rcbd_a_sidak.csv"
@@ -185,9 +186,6 @@ disclosure_tab <- tabItem(
   img(src = "logo.png", height =80, width = 290,style="display: block; margin-left: auto; margin-right: auto;"),
   br(),
   p("MSE FindR is a R Shiny application developed to help researchers obtain estimates of the mean square error (MSE) from balanced studies reporting treatment means and post hoc letter results."),
-  p("In ANOVA, the MSE is an unbiased estimate of the common population variance (σ²) and can be used to calculate the pooled sample standard deviation (Sₚ), 
-    required for quantitative research synthesis methods, such as meta-analysis. By providing a collection of functions and algorithms that examines significant 
-    and nonsignificant mean differences, MSE FindR obtains an estimate of MSE that can subsequently be used for Sₚ estimation, ultimately, expanding the array of studies for inclusion in the quantitative synthesis of research findings."),
   p("Developed collaboratively by plant pathologists from North Carolina State University, Pennsylvania State University, and Kansas State University, MSE FindR supports a variety of experimental designs and post hoc tests,
     including Fisher’s LSD, Tukey’s HSD, Scheffé's test, Bonferroni, and Šidák corrections for multiple comparisons."),
   br(),
@@ -196,7 +194,8 @@ disclosure_tab <- tabItem(
       on how to use MSE FindR can be found", tags$a(href="https://github.com/vcgarnica/MSE_FindR","here.")),
   br(),
   h4("Example files"),
-  p(downloadLink("rcbd_fisher", "RCBD with Fisher's LSD test"), br(),
+  p(downloadLink("latin_fisher", "Latin Square with Fisher's LSD test"), br(),
+    downloadLink("rcbd_fisher", "RCBD with Fisher's LSD test"), br(),
     downloadLink("factorial_rcbd_a_fisher", "2-way factorial as a RCBD with Fisher's LSD (A present, B ommitted)"), br(),
     downloadLink("factorial_rcbd_ab_scheffe", "2-way factorial as a RCBD with Scheffe test (A x B present)"), br(),
     downloadLink("sp_rcbd_a_sidak", "Split-plot as a RCBD with Sidak correction (A mainplot present, B subplot ommitted)"), br(),
@@ -314,13 +313,13 @@ estimator_tab <-  tabItem(tabName = "Estimator",
                                 condition = "input.exp_design == 'Split-plot as a CRD'  || input.exp_design == 'Split-plot as a RCBD'",
                                 box(title = "Specify Column", width = 6, solidHeader = T, 
                                     column(8, selectInput("trial_id_sp", "Unique trial identifier number", NULL),
-                                           selectInput("variation_sp", "Source of variation", choices = c("A","B within A")),
+                                           selectInput("variation_sp", "Source of variation", choices = c("A","A within B")),
                                            conditionalPanel( condition = "input.variation_sp == 'A'", 
                                                              fluidRow(column(8,selectInput("factor_A_sp", "Factor A", NULL)),radioButtons("radio_sp", "Level",list("Main plot","Sub plot"), inline = TRUE, selected = "Main plot")),
                                                              fluidRow(column(8,selectInput("factor_B_sp", "Number of levels factor B", NULL)))),
-                                           conditionalPanel( condition = "input.variation_sp == 'B within A'", 
-                                                             fluidRow(column(8,selectInput("factor_A_sp_ab", "Factor A (Main plot Level)", NULL))),
-                                                             fluidRow(column(8,selectInput("factor_B_sp_ab", "Factor B (Sub plot Level)", NULL)))),
+                                           conditionalPanel( condition = "input.variation_sp == 'A within B'", 
+                                                             fluidRow(column(8,selectInput("factor_A_sp_ab", "Factor A (Sub plot Level)", NULL))),
+                                                             fluidRow(column(8,selectInput("factor_B_sp_ab", "Factor B (Main plot Level)", NULL)))),
                                            selectInput("replicates_sp", "Number of replicates", NULL),
                                            selectInput("means_sp", "Means", NULL),
                                            selectInput("letters_sp", "Post hoc test letters", NULL))))),
@@ -498,7 +497,7 @@ server <- function(input, output,session) {
                                                                                       n_factor_B = (.data[[input$factor_B_sp]]),
                                                                                       n_replicates=(.data[[input$replicates_sp]]))}
       
-      if(input$variation_sp=="B within A"){
+      if(input$variation_sp=="A within B"){
         dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_sp_ab]])),
                                                                                       n_factor_B = length(unique(.data[[input$factor_B_sp_ab]])),
                                                                                       n_replicates=(.data[[input$replicates_sp]]))}   
@@ -515,7 +514,7 @@ server <- function(input, output,session) {
       }
       
       
-      if(input$variation_sp=="B within A"){
+      if(input$variation_sp=="A within B"){
        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = n_factor_A*(n_replicates-1)*(n_factor_B-1))
        }   
        
@@ -639,8 +638,8 @@ server <- function(input, output,session) {
       }
       
 
-      # B within A  --------------------------------------------------------------------------------------------------------      
-      if(input$variation_sp=="B within A"){ 
+      # A within B  --------------------------------------------------------------------------------------------------------      
+      if(input$variation_sp=="A within B"){ 
       dt<-data_filtered()  %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>%
         mutate(msd=mean(get_MSD_SP(.data[[input$means_sp]],.data[[input$letters_sp]],.data[[input$factor_A_sp_ab]])$n))
       
@@ -687,7 +686,15 @@ server <- function(input, output,session) {
   })
   
   # Download example files
-  
+  output$latin_fisher <- downloadHandler(
+    filename = function() {
+      paste("latin_fisher.csv", sep="")
+    },
+    content = function(file) {
+      write.csv(read_csv(url(latin_fisher_raw)), file)
+    }
+  )  
+
   output$rcbd_fisher <- downloadHandler(
     filename = function() {
       paste("rcbd_fisher.csv", sep="")
