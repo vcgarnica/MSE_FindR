@@ -2,9 +2,9 @@
 
 ## Introduction
 
-Meta-analysis is a methodology used to synthesize the results of multiple, independent studies to provide an overall estimate of a treatment effect along with a measure of its precision. In the absence of individual participant data (a.k.a. raw data), standard meta-analytic approaches on continuous outcomes rely on reported summary metrics, such as the mean and a corresponding measure of variability (e.g., the sample standard deviation and standard error values for each treatment group). This is because effect sizes in meta-analyses are normally weighted by study precisions, most commonly by the inverse of study variance. A common complication arises when none of these summary variability metrics are explicitly included in the primary studies.
+Meta-analysis is a methodology used to synthesize the results of multiple independent studies to provide an overall estimate of a treatment effect, along with a measure of its precision. In the absence of individual participant data (a.k.a. raw data), standard meta-analytic approaches for continuous outcomes rely on reported summary metrics, such as the mean and a corresponding measure of variability (e.g., the sample standard deviation and standard error values for each treatment group). This is because effect sizes in meta-analyses are typically weighted by the study's precision, most commonly by the inverse of the study variance. A common complication arises when none of these summary variability metrics are explicitly included in the primary studies.
 
-`MSE FindR` is a user-friendly R shiny web app tool developed to help researchers obtain a measurement of variability from studies lacking summary metrics, and that, instead, report treatment means, alpha significance level ($\alpha$), number of replicates, and post hoc test results. `MSE FindR` estimates the pooled variance (i.e., MSE; mean square error), the estimator of population variance $\sigma^2$, and thus $\hat\sigma^2$, in replicated, randomized studies analyzed with ANOVA. `MSE FindR` extracts $\hat\sigma^2$ using basic experimental information, conditional that trials are balanced (i.e., the same number of replicates per treatment). Once the MSE has been estimated, one can then calculate the variability measurements required in meta-analysis studies. MSE and $\hat\sigma^2$ will be used interchangeably in the tutorial.
+`MSE FindR` is a user-friendly R Shiny web app tool developed to help researchers obtain a measurement of variability from studies lacking summary metrics. Instead, it utilizes treatment means, alpha significance level ($\alpha$), the number of replicates, and post-hoc test results. `MSE FindR` estimates the pooled variance (i.e., MSE; mean square error), the estimator of population variance $\sigma^2$, and thus $\hat\sigma^2$, in replicated, randomized studies analyzed with ANOVA. The tool extracts $\hat\sigma^2$ using basic experimental information, provided that the trials are balanced (i.e., the same number of replicates per treatment). Once the MSE has been estimated, one can then calculate the variability measurements required in meta-analysis studies. MSE and $\hat\sigma^2$ will be used interchangeably in the tutorial.
 
 The application is hosted at [https://garnica.shinyapps.io/MSE_FindR/](https://garnica.shinyapps.io/MSE_FindR/).
 
@@ -29,7 +29,7 @@ And post hoc tests:
 * Scheffé's test
 
 
-`MSE FindR` contains four main modules (Disclosure, Upload file, Separate means and letters, and Estimator) to help users navigate through the tool functionalities and conveniently obtain $\hat\sigma^2$ for multiple trials at a time (Figure 1). 
+`MSE FindR` contains three main modules: Disclosure, Upload file, and Estimator, to help users navigate through the tool's functionalities and conveniently obtain $\hat\sigma^2$ for multiple trials at a time (Figure 1). 
 
 ![legend](https://github.com/vcgarnica/MSE_FindR/blob/main/Images/workflow.png)
 Figure 1. MSE FindR conceptual flowchart highlighting the inputs and estimation for randomized complete block designs analyzed with Fisher's LSD test.
@@ -42,24 +42,11 @@ Contains a walk-through tutorial, downloadable example files, information about 
 
 ## `MSE FindR`: Upload CSV file
 
-In this module, users upload the CSV file containing the trial-specific information, which may vary depending on the experimental design and treatment structure of compiled studies. Instructions on how to collate trials data into a CSV input file are presented below. Only standard CSV formats are accepted by the application with default configurations set to comma separators and double quotes. Settings can be modified to match the CSV data file.
-
-
-## `MSE FindR`: Separate means and letters
-
-Occasionally, treatment means and post hoc test results are combined in a column. This is a common issue, for example, when the original trial report, available as a PDF, is converted to XLSX to optimize data digitalization. Additionally, there have been situations where post hoc letter results are reported in an abbreviated form (ex. “a-c” instead of “abc” or “f-j” instead of “fghij”) (Figure 2).
-
-
-![Legend](https://github.com/vcgarnica/MSE_FindR/blob/main/Images/sep.png)
-Figure 2. Column 'y' before and after treatment via separate means and letters module. Note the newly created clean_means and clean_letters columns.
-
-
-This optional module is equipped with a function enabling users to split a single column storing both treatment means and post hoc test results into two new columns, named ‘clean_means’ and ‘clean_letters’. This function can also simultaneously expand abbreviated letters into a complete list of elements (Figure 2). Note that the newly created columns (‘clean_means’ and ‘clean_letters’) should be selected in the next steps of $\hat\sigma^2$ extraction, in case users opt to use this function.
-
+In this module, users can upload a CSV file that contains information specific to a trial. The information in the file may vary depending on the design and structure of the study. Below, you will find instructions on how to gather trial data and organize it into a CSV file. The application only accepts standard CSV formats, and the default settings are set to use commas as separators and double quotes. However, these settings can be modified to match the format of your CSV data file.
 
 ## `MSE FindR`: Estimator
 
-After the CSV file has been pre-processed according to `MSE FindR` tutorial and uploaded into the application, users may proceed with $\hat\sigma^2$ computation in this module. That is done by assigning columns of CSV input file, named at the user's preferences, to the respective selection fields that are dynamically presented as experimental designs are selected. Note that a proper assignment of columns to the respective selection fields is a critical step for correct $\hat\sigma^2$ extraction. Following $\hat\sigma^2$ computation via the estimate button, a drop-in download button will appear where `MSE FindR` results can be exported as a CSV file (Figure 1). `MSE FindR` obtains a trial-specific value for $\hat\sigma^2$ and its respective degrees of freedom.
+After pre-processing a CSV file using the `MSE FindR` tutorial and uploading it into the application, users can calculate $\hat\sigma^2$ by assigning columns of the CSV file, named at the user's preferences, to the appropriate fields. Note that a proper assignment of columns to the respective selection fields is a critical step for correct $\hat\sigma^2$ extraction.  Once columns have been properly assigned and the estimate button is clicked, a download button will appear allowing users to export the results as a CSV file. The `MSE FindR` method calculates a trial-specific value for $\hat\sigma^2$ and its associated degrees of freedom.
 
 
 ## Procedure
@@ -68,26 +55,28 @@ After the CSV file has been pre-processed according to `MSE FindR` tutorial and 
 
 First, users must only assign trials with the same experimental configuration, meaning the same **experimental design**, **post hoc test**, **$\alpha$ significance level**, and **treatment structure (for two-way designs)** to the CVS input file (Figure 1). Incorrect $\hat\sigma^2$ can result from assigning trials with incompatible information to the same CVS file. 
 
-*Example 1*: A systematic reviewer collects ten trial reports investigating the effect of four commercially available fertilizers, with yield as response. Half of these trials were analyzed with Fisher's LSD and the other half were analyzed with Tukey's HSD. In addition, two trials of Tukey's group were arranged as CDR and the remaining three were arranged as RCBD. In this case, users must organize trials in three different folders, one for Fisher's LSD, another for Tukey's HSD arranged as CRD, and a third for Tukey's HSD arranged as RCBD, assuming all the other information is the same. This is an example where the **experimental design** and **post hoc test** is different between trials. Each folder will have its CSV input file.
+*Example 1*: A systematic reviewer has collected data from ten trials that examine the impact of four different commercial fertilizers on yield. Half of these trials were analyzed using Fisher's LSD and the other half were analyzed using Tukey's HSD. Additionally, two trials that used Tukey's HSD were arranged as CRD and the remaining three were arranged as RCBD. In order to properly organize this data, the user should create three separate folders, one for Fisher's LSD, one for Tukey's HSD arranged as CRD, and one for Tukey's HSD arranged as RCBD. This is an example where the **experimental design** and **post-hoc test** used in the trials are different. Each folder should contain a CSV input file with trials with similar criteria.
 
 *Example 2*: It was later found that four trials in the Fisher's group were analyzed with $\alpha$ set to 0.05 and one trial was analyzed with $\alpha$ set to 0.10. In this case, a fourth folder is needed, instead of three, to account for the difference in **$\alpha$ significance level** among Fisher's trials.  
 
-*Example 3*: The systematic reviewer selected five independent trial reports containing each a plant experiment arranged as a two-way factorial RCBD and testing combinations of six-to-eight commercially available fertilizers and three-to-five soybean cultivars, with yield as response. Note that, the original authors may choose to publish results for either fertilizer (factor A), cultivar (factor B), or the interaction (A × B), depending on research goals and ANOVA results. The systematic reviewer is interested in obtaining $\hat\sigma^2$ for A treatments and while two trial reports contain means/post hoc tests for A, the remaining three report means for the A × B interaction. This is a scenario where the experimental design is the same but the **treatment structure** of trials is different. Two folders, one for each treatment structure, must be created, assuming all the information is the same. We will discuss what information is needed between different experimental designs/treatment structures at later stages.
+*Example 3*: The systematic reviewer has selected five independent trial reports that each conduct a plant experiment arranged as a two-way factorial RCBD, testing combinations of six to eight commercially available fertilizers and three to five soybean cultivars, with yield as the response. The original authors of the trials may choose to publish results for either the fertilizer (factor A), cultivar (factor B), or the interaction (A x B), depending on their research goals and ANOVA results. The systematic reviewer is interested in obtaining $\hat\sigma^2$ for the fertilizer response, but two trial reports contain means/post-hoc tests for A, while the remaining three reports contain means/post-hoc tests for the A x B interaction. This is a scenario where the experimental design is the same, but the **treatment structure** of the trials (whether data is presented as factor A or A x B) is different. Two folders, one for each treatment structure, should be created, assuming all other information is the same. We will discuss the information needed for different experimental designs and treatment structures at later stages.
 
-*Example 4*: The systematic reviewer now selects two nearly identical trial reports with plant experiments arranged as a split-plot RCBD testing combinations of four-to-five fertilizers (factor A) and three-to-five cultivars (factor B), with plant height as response. Notably, the trial reports have been published by the same authors and only means (and obviously, post hoc test results) for factor A are available. Factor B and A × B were omitted because there was no significant effects for these factors during ANOVA. All the other experimental information is the same, except that A treatments were allocated to main plots in the first trial report and to subplots in the second trial report. Conversely, B treatments were allocated to subplots and main plots for the first and second trials, respectively. This is a scenario where treatments are reported similarly but are still **structurally** different, and thus, trials must be collated separately. 
+*Example 4*: The researcher has selected two nearly identical trial reports that conduct plant experiments arranged as a split-plot RCBD, testing combinations of four to five fertilizers (factor A) and three to five cultivars (factor B), with plant height as the response. Notably, the trial reports have been published by the same authors and only means/post-hoc test results for factor A are available. Factors B and A x B were omitted as there were no significant effects for these factors during ANOVA. All other experimental information is the same, except that in the first trial report, fertilizers treatments were allocated to main plots and cultivars treatments to subplots, while in the second trial report, fertilizers treatments were allocated to subplots and cultivar treatments to main plots. This is a scenario where the treatments are reported similarly (only fertilizer means/post hoc) but are structurally/spatially different, and thus, the trials must be collated separately. Assigning trials with fertilizers means/post-hoc test to incorrect hierarchical level (main or subplot) will generate incorrect calculations and degree of freedom estimations.
 
 Therefore, users must compile trial reports that share the same *experimental design*, *post hoc test*, $\alpha$ *significance level*, and *treatment structure (for two-way designs)* configurations. 
 
 
 ### Step 2 - Determine information needed for CSV input file collation
 
-As one may anticipate, the number of columns required for $\hat\sigma^2$ extraction via `MSE FindR` may differ between experimental designs. For example, consider a Latin square design, the simplest experimental design available in `MSE FindR`. In this design the number of columns, rows, and treatments is equal and there is only one treatment factor under evaluation (see, [Montgomery, 2017](https://www.google.com/books/edition/Design_and_Analysis_of_Experiments/Py7bDgAAQBAJ?hl=en&gbpv=0)), herein called factor A. Therefore, `MSE FindR` will count the number of treatments and automatically assign that value for the number of columns and rows, so the number of degrees of freedom for the error variance can be calculated for that experimental design. 
+`MSE FindR` is a tool that can be used to extract the value of $\hat\sigma^2$ for multiple experimental designs. As one may anticipate, $\hat\sigma^2$ extraction will be different across experimental designs. More complex (2-way) designs will require more information than simpler (1-way) designs.
 
-Alternatively, for other one-way designs such as CRD or RCBD, the information required for obtaining $\hat\sigma^2$ depends also on the number of replicates or blocks, which is not necessarily equal to the number of treatment levels. Therefore, the CSV input files for CRDs and RCBDs must also include the number of replicates or blocks for each trial. `MSE FindR` will count the number of distinct treatments, once the column has been correctly specified in the tool, and compute the correct number of degrees of freedom based on both replicates/blocks and treatment numbers. 
+For example, consider a Latin square design, the simplest experimental design available in `MSE FindR`. In this design the number of columns, rows, and treatments is equal and there is only one factor under evaluation (see, [Montgomery, 2017](https://www.google.com/books/edition/Design_and_Analysis_of_Experiments/Py7bDgAAQBAJ?hl=en&gbpv=0)), herein called factor A. Thus, users do not need to specify the number of columns and rows in each trial analyzed. `MSE FindR` will count the number of treatments and automatically assign that value to calculate the number of degrees of freedom for the error variance. 
 
-Additional information is required when extracting $\hat\sigma^2$ from trials arranged in more complex experimental designs, such as two-way factorials or split-plot designs. In these scenarios, original researchers wanted also to investigate a second treatment factor, herein called factor B, which may or may not interact (significantly) with A, and therefore, may or may not be explicitly included in the original publication. When the collection of scientific reports or studies is arranged as two-way factorial or split-plot designs and only treatment means and post hoc results for A are included, users must provide a column in the CSV input file specifying the **number of levels for the omitted factor B**. Alternatively, if A × B means have been reported, then the systematic reviewer must list A and B treatment columns independently in the CSV input file. Note: more precise $\hat\sigma^2$ calculations are observed when information includes A × B interaction rather than A levels only for two-way designs. Additionally, note that in factorial designs, A and B can be assigned interchangeably, meaning any treatment factor can be named A or B – which is not the case with split-plot designs because of the hierarchical/spatial structure present in split-plot design.
+When using other experimental designs, such as CRD or RCBD, the information needed to calculate $\hat\sigma^2$ also depends on factors such as the number of replicates or blocks in the trial. These numbers may not be equal to the number of treatment levels. As a result, users who want to calculate $\hat\sigma^2$ for these designs must include information about the number of replicates or blocks in the CSV input file used with `MSE FindR`. The tool will then use this information, along with the number of distinct treatments, to compute the correct number of degrees of freedom for the error variance.
 
-There are some similarities in ANOVA of two-way factorial designs and CRDs and RCBDs, being the presence of a single error term describing the variance of all treatments, which contrasts split-plot designs where at least two error terms are present, one for factors assigned to the main plot and a second for subplot factors (see, [Montgomery, 2017](https://www.google.com/books/edition/Design_and_Analysis_of_Experiments/Py7bDgAAQBAJ?hl=en&gbpv=0)). Knowing whether A, the factor of interest, was placed in the main or subplot levels matters because it affects how the number of degrees of freedom of $\hat\sigma^2$ is calculated. Five distinct $\hat\sigma^2$ could arise, depending on whether factor A is allocated on main versus subplot levels and the presence/absence of significant factor interactions:
+In some cases, researchers may be interested in studying a second treatment factor (factor B) in addition to factor A, and this factor may or may not interact with factor A. This information may not be included in the original publication as per author's decision. When the data is arranged as two-way factorial or split-plot designs and only treatment means/post-hoc results for factor A are included, users must provide a column in the CSV input file specifying the **number of levels for the omitted factor B**. Alternatively, if means/post hoc results for the A x B interaction have been reported, then the systematic reviewer must list the treatment columns for factors A and B independently in the CSV input file. It's worth noting that the calculation of $\hat\sigma^2$ is more precise when information about the A x B interaction is included, rather than just the levels of factor A or B for two-way designs (check [Ngugi et al., 2011](https://apsjournals.apsnet.org/doi/abs/10.1094/PHYTO-08-10-0221)). Additionally, it's important to note that in factorial designs, factors A and B can be assigned interchangeably, meaning any treatment factor can be named A or B. However, this is not the case in split-plot designs due to their hierarchical/spatial structure.
+
+There are some similarities between the ANOVA of two-way factorial designs and designs such as CRD and RCBD, in that there is a single error term describing the variance of all treatments. This contrasts with split-plot designs, where at least two error terms are present, one for factors assigned to the main plot and a second for subplot factors (see, [Montgomery, 2017](https://www.google.com/books/edition/Design_and_Analysis_of_Experiments/Py7bDgAAQBAJ?hl=en&gbpv=0)). Knowing whether factor A, the factor of interest, was placed in the main or subplot levels is important because it affects how the number of degrees of freedom of $\hat\sigma^2$ is calculated. Depending on whether factor A is allocated on main or subplot levels and the presence/absence of significant factor interactions, there could be five distinct values of $\hat\sigma^2$:
 
 When the A × B interaction **is not significant** in primary studies:
 
@@ -100,23 +89,25 @@ When A × B interaction **is statistically significant** in primary studies:
 4. Obtaining $\hat\sigma^2$ for A in the main plot level within the subplot level (B within A)
 5. Obtaining $\hat\sigma^2$ for A in the subplot level across different main plot levels (A × B)
 
-`MSE FindR` is able to compute $\hat\sigma^2$ for scenarios 1, 2, and 3. For 5, $\hat\sigma^2$ consists of a weighted average between $\hat\sigma^2_A$ (main plot error) and $\hat\sigma^2_B$ (subplot error), which is considerably more complex to conduct. Noteworthy, the collation of trial data into the input CSV file follows the same systematic process of two-way factorial and split-plot designs. However, users need to be mindful of whether factor A was allocated to main or subplot levels in split-plot designs, and correctly specify such information in later steps. Incorrect $\hat\sigma^2$ results from wrongly assigning factor A to subplot level when it was supposed to be assigned to the main plot level and vice-versa. 
+`MSE FindR` is able to compute $\hat\sigma^2$ for scenarios 1, 2, and 3. For 5, $\hat\sigma^2$ consists of a weighted average between $\hat\sigma^2_A$ (main plot error) and $\hat\sigma^2_B$ (subplot error), which is considerably more complex. The process of collating trial data into the input CSV file for split-plot designs is similar to that of two-way factorial designs. However, users must be mindful of whether factor A was allocated to the main or subplot levels, and specify this information correctly in later steps. Incorrect $\hat\sigma^2$ results may occur if factor A is wrongly assigned to the subplot level instead of the main plot level or vice versa. 
 
-We go into detail about the information needed for each treatment structure/experimental design below and how to specify experimental  configurations for all trials in the CSV file in the tool at later stages. Downloadable example files are also available to aim in the collation of trial data into the CSV input file.
-
+More information on the data requirements and how to specify experimental configurations for all trials in the CSV file can be found below. Downloadable example files to assist with the collation process can be found in the `MSE FindR` app.
 
 ### Step 3 - Create a CSV file
 
-After trial reports with similar experimental configurations have been organized together, then it is time to collate trial data into the CSV input file. This is accomplished by defining what `MSE FindR` needs, based on the *experimental design* and *treatment structure (for two-way designs)*. There is no need to include the post hoc test, experimental design, and $\alpha$ significance level as columns in the CSV file as users will specify that information at later stages (Step 4) via field selections in the Estimator module (Figure 1).
+The next step after organizing trial reports with similar experimental configurations is to compile the data into a CSV input file. This process involves specifying the necessary information based on the experimental design and treatment structure (for two-way designs) for `MSE FindR` to function properly. It is important to note that the **post-hoc test** **experimental design**, and **\alpha significance level** info do not necessarily need to be included in the CSV file as users will provide that information at later stages through field selections in the Estimator module (Figure 1). One could though add that information to keep files more traceable. 
+
+Below you can find **experimental design** specific information for CSV input file processing. Multiple trials cna be collated to the same CSV input file, as long as they meet the criteria discussed above.
 
 #### 3.1. Latin square
 
-The CSV input file should contain columns specifying the trial identifier number (*trial_id*, in example below), treatment list for factor A (*fertilizer*), treatment means (*yield*), and the post hoc test results (*letters*) columns, named at user's preferences:
+The CSV input file should include columns that specify the trial identifier number (e.g., *trial_id*), treatment list for factor A (e.g.,*fertilizer*), treatment means (e.g.,*yield*), and the post hoc test results (e.g., *letters*). These columns can be named according to the user's preference.
 
-* **Unique trial identifier number:** contains trial identification number — numerical. Allows $\hat\sigma^2$ extraction for multiple trials simultaneously.
+In the application, at Estimator tab, Select columns box, there will be the following fields in Latin square design:
+* **Unique trial identifier number:** allows extraction of $\hat\sigma^2$ for multiple trials at once by including a unique numerical identification number for each trial.
 * **Factor A:** represents the treatment list for factor A – either numerical or categorical.
 * **Means:** represents treatment means – numeric.
-* **Post hoc test letters:** contains letters of post hoc tests – categorical.
+* **Post hoc test letters:** contains letters of post hoc tests results – categorical.
 
 
 Table 1. Example of columns in the CSV file for obtaining $\hat\sigma^2$ via `MSE FindR`in Latin square designs. 
@@ -135,7 +126,7 @@ Table 1. Example of columns in the CSV file for obtaining $\hat\sigma^2$ via `MS
 
 #### 3.2. One-way CRD and RCBD designs
 
-For one-way CRD and RCBD designs, in addition to the columns above, a replicate or block column (*rep*) should be included in the CSV input file:
+For one-way CRD and RCBD designs, the number of replicates (e.g., *rep*) or blocks will need to be included in the CSV input file:
 
 * **Number of replicates:** represents the total number of replicates or blocks for each trial — assumes a balanced trial (i.e., the same number of replicates for each treatment) – numerical.
 
@@ -155,11 +146,11 @@ Table 2. Example of columns in the CSV file for obtaining $\hat\sigma^2$ via `MS
 
 #### 3.3. Two-way factorial and split plot designs
 
-As mentioned earlier, additional information is required when calculating $\hat\sigma^2$ from trials with more complex experimental designs, such as two-way factorials or split-plot designs. In these scenarios, users are interested in obtaining $\hat\sigma^2$ for either factor A or the interaction A × B.
+As mentioned earlier, additional information is required when calculating $\hat\sigma^2$ from trials with two-way factorials or split-plot designs. In these scenarios, users are interested in obtaining $\hat\sigma^2$ for either factor A (which may be placed in main or subplot for split-plots) or the interaction A × B. We will cover scenarios where A or A × B are of interest separately below. Note that users will need to specify whether `MSE FindR` is handling A or the interaction A × B in the app.
 
 ##### 3.3.1. *One treatment factor omitted*
 
-When the collection of scientific reports or studies is arranged as two-way factorial or split-plot designs and contains only means and post hoc results for factor A (*fertilizer*), users must include the list treatment for A and the **number of levels for the omitted factor B** (cultivar) (Table 3). This is often the case when A × B interaction is not significant in primary studies and authors decide to omit results from the original publication. In this case, add a column in the CSV input file with the number of levels for the omitted factor B:
+When the collection of scientific reports or studies is arranged as two-way factorial or split-plot designs and only treatment means and post hoc results for factor A (e.g., *fertilizer*) are included, users must provide a column in the CSV input file specifying the **number of levels for the omitted factor B (e.g., cultivar)**. This is often the case when A × B interaction is not significant in primary studies and authors decide to omit its results from the original publication. In this case, add a column in the CSV input file with the number of levels for the omitted factor B:
 
 * **Number of levels of factor B:** represents the number of levels for factor B – numerical.
 
@@ -180,7 +171,7 @@ Table 3. Example of columns in the CSV file for obtaining $\hat\sigma^2$ via `MS
 
 ##### 3.3.2. *Both treatment factors present*
 
-Conversely, in scenarios where users are interested in obtaining $\hat\sigma^2$ for trials with a significant A × B interaction, two independent columns respective to factors A and B should be included for all trials in the input CSV file (Table 4). In scenarios where A × B interaction means are reported, users must specify a column for factor B treatment list via:
+In contrast, if the primary studies show a significant A x B interaction, then it is necessary to include two separate columns in the input CSV file for the treatment lists of both factors A and B (Table 4). Factor B treatment column is specified via:
 
 * **Factor B:** represents the treatment list for factor B – either numerical or categorical.
 
@@ -198,7 +189,7 @@ Table 4. Example of columns in the CSV file for obtaining $\hat\sigma^2$ via `MS
 |...       | ...  | ... | ... | ... |  ...   |
 
 
-Note that in factorial designs, A and B can be used interchangeably because there is only one error variance in ANOVA, which is not the case for split-plot designs. Users must specify whether factor A was allocated in the main or subplot levels in split-plot designs at later field selection steps. However, the collation of trial data must obey the same treatment structure rule, meaning only trials with A allocated to either the main or subplot levels can be compiled together, as in example 4 of the tutorial. 
+Final note: In factorial designs, A and B can be used interchangeably because there is only one error variance in ANOVA, which is not the case for split-plot designs. In split-plot designs, users must specify whether factor A was allocated in the main or subplot levels by making the selection in the proper field within `MSE FindR` Estimate tab. We reinforce that the collation of trials data must obey the same treatment structure rule, meaning only trials with A allocated to either the main or subplot levels can be compiled together, as in example 4 of the tutorial. 
 
 
 ### Step 4 - Upload the CSV file
@@ -208,9 +199,9 @@ In this step, users upload the pre-processed CSV file containing the required in
 
 ### Step 5 - Make field selections and estimate
 
-After trial-specific information has been correctly collated into the CSV input file and uploaded, users will proceed with $\hat\sigma^2$ calculations in the Estimator module. In this module, users need to indicate the experimental design, post hoc test, and $\alpha$ significance level for all underlying trials in the CSV input file via design box (Figure 1). The selection fields in specify column box are dinamically updated as experimental designs are selected in the design box. Users must match the CSV input file columns with their respective selection fields during this step.
+After the trial data has been correctly organized in the CSV input file and uploaded, users can proceed with the calculation of $\hat\sigma^2$ in the Estimator module. In this module, users need to select the experimental design, post hoc test, and $\alpha$ significance level for all trials in the CSV input file using the design box (Figure 1). The selection fields in the specify column box will be updated dynamically as the experimental design is selected in the design box. Users must match the columns in the CSV input file with their corresponding selection fields during this step.
 
-For two-way factorial designs, additional selection field options are displayed to indicate whether the treatment structure of compiled trials represented the A × B interaction or the factor B omitted. That is accomplished via the field **source of variation** in the Estimator module. Select `A` when only means for one treatment factor is present and `A × B` when both factor means are reported. 
+In two-way factorial designs, additional selection field options are available to indicate whether the treatment structure of the compiled trials represents the A × B interaction or the omitted factor B. This is done through the field **source of variation** in the Estimator module. Select **A** when only means for one treatment factor are present and **A × B** when both factor means are reported.
 
 * **Source of variation:** represents the treatment structure of studies. Select `A` when only means for one factor are reported and `A × B` when both treatment lists are available.
 
@@ -218,13 +209,11 @@ Alternatively, if the collection of trials was arranged as a two-way split-plot 
 
 * **Level:** represents the level (main or subplot) when only a single factor is reported. Users must select one of the options to distinguish between 1 and 2 $\hat\sigma^2$ calculations in split-plot designs.
 
-Note that when `A × B` is selected in the source of variation for split-plot designs, `A` must be assigned to the subplot level, unconditionally. As mentioned earlier, `MSE FindR` can provide $\hat\sigma^2$ values for scenarios 1, 2, and 3 of split-plot designs (Step 2).
-
 ### Step 6 - Export file
 
-After columns have been properly assigned to the respective selection fields and the estimate button pressed, a download button along with the results table will be displayed. Users can export the file containing `MSE FindR` estimates of degrees of freedom and $\hat\sigma^2$ for each trial along with information previously included in the CSV input file. 
+After clicking on the estimate button, a download button along with the results table will be displayed. Users can export the file containing `MSE FindR` estimates of degrees of freedom and $\hat\sigma^2$ for each trial along with information previously included in the CSV input file. 
 
-Obs.: Users may check whether $\hat\sigma^2$ has been correctly calculated by hand-calculating the degrees of freedom for a few trials and comparing that value to `MSE FindR` degrees of freedom estimates. At this point, one should know that only one $\hat\sigma^2$ value is calculated for each trial. `MSE FindR` returns `NA` when non-significant post hoc test results are included (e.g. all letters are the same in a trial).
+Obs.: Users may check whether $\hat\sigma^2$ has been correctly calculated by hand-calculating the degrees of freedom for a few trials and comparing that value to `MSE FindR` estimates. At this point, one should know that only one $\hat\sigma^2$ value is calculated for each trial. `MSE FindR` returns `NA` when non-significant post hoc test results are included (e.g. all letters are the same for a trial).
 
 
 # Technical details

@@ -11,10 +11,9 @@
 library("shiny")
 library("shinydashboard")
 library("tidyverse")
-library("lubridate")
 library("data.table")
 library("DT")
-library("dashboardthemes")
+library("fresh")
 library ("readr")
 
 
@@ -68,83 +67,53 @@ get_MSD_SP<-function(value,letter,group){
   return(msd) 
 }
 
-# Expands compacted letters into full length strings (ex. a-d into abcd)
-expand_letters<-function(string1) {
-  paste(letters[do.call(`:`, as.list(match( strsplit(string1, "-")[[1]],letters)))], collapse="")
-}
-
-# Obtain and expand letters associated with means
-get_letters<-function(variable){
-  if(anyNA(variable)){
-    return(NA_real_)}
-  else{
-    l1<-str_replace_all(variable, "[\r\n]", "") 
-    l2<-gsub("[[:digit:]]","",l1)
-    l3<-gsub("[.]","",l2)
-    l4<-as.character(str_replace_all(l3, fixed(" "), ""))
-    i1 <- grep('-',l4)
-    l4[i1]<-sapply(l4[i1], expand_letters)
-    return(l4)
-  }
-}
-
-# Obtain values associated with means
-get_values<-function(variable){
-  if(anyNA(variable)){
-    return(NA_real_)}
-  else{
-    v1<-gsub("[-[:alpha:]]", "\\1",variable)
-    v2<-str_replace_all(v1, fixed(" "), "")
-    value<-as.numeric(v2)
-    return(value)}
-}
 
 # ---------------------------------------------------------------
 
 Fisher_MSE<- function(msd,rep,alpha,df){
-  mse<-0.5*unique(rep)*(msd/qt(1-unique(alpha)/2,unique(df)))^2
+  mse<-round(0.5*unique(rep)*(msd/qt(1-unique(alpha)/2,unique(df)))^2,3)
   return(mse)}
 Tukey_MSE<- function(msd,rep,alpha,df,n_factor){
-  mse<-unique(rep)*(msd/qtukey(1-unique(alpha),unique(n_factor),unique(df)))^2
+  mse<-round(unique(rep)*(msd/qtukey(1-unique(alpha),unique(n_factor),unique(df)))^2,3)
   return(mse)
 }
 Bonferroni_MSE<- function(msd,rep,alpha,df,n_factor){
   k<-choose(unique(n_factor),2)
-  mse<-0.5*unique(rep)*(msd/qt(1-((unique(alpha)/2)/k),unique(df)))^2
+  mse<-round(0.5*unique(rep)*(msd/qt(1-((unique(alpha)/2)/k),unique(df)))^2,3)
   return(mse)
 }
 Sidak_MSE<- function(msd,rep,alpha,df,n_factor){
   k<-choose(unique(n_factor),2)
-  mse<-0.5*unique(rep)*(msd/qt(1-(1-(unique(alpha))/2)^(1/k),unique(df)))^2
+  mse<-round(0.5*unique(rep)*(msd/qt(1-(1-(unique(alpha))/2)^(1/k),unique(df)))^2,3)
   return(mse)
 }
 Scheffe_MSE<- function(msd,rep,alpha,df,n_factor){
-  mse<-(unique(rep)*msd^2)/(2*(unique(n_factor)-1)*qf(1-unique(alpha),unique(n_factor)-1,unique(df)))
+  mse<-round((unique(rep)*msd^2)/(2*(unique(n_factor)-1)*qf(1-unique(alpha),unique(n_factor)-1,unique(df))),3)
   return(mse)
 }
 
 # ---------------------------------------------------------------
 
 Fisher_MSE_ab<- function(msd,rep,alpha,df,n_other_factor){
-  mse<-0.5*unique(rep)*unique(n_other_factor)*(msd/qt(1-alpha/2,df))^2
+  mse<-round(0.5*unique(rep)*unique(n_other_factor)*(msd/qt(1-alpha/2,df))^2,3)
   return(mse)
 }
 Tukey_MSE_ab<- function(msd,rep,alpha,df,n_factor,n_other_factor){
-  mse<-unique(n_other_factor)*unique(rep)*(msd/qtukey(1-unique(alpha),unique(n_factor),unique(df)))^2
+  mse<-round(unique(n_other_factor)*unique(rep)*(msd/qtukey(1-unique(alpha),unique(n_factor),unique(df)))^2,3)
   return(mse)
 }
 Bonferroni_MSE_ab<- function(msd,rep,alpha,df,n_factor,n_other_factor){
   k<-choose(unique(n_factor),2)
-  mse<-0.5*unique(n_other_factor)*unique(rep)*(msd/qt(1-((unique(alpha)/2)/k),unique(df)))^2
+  mse<-round(0.5*unique(n_other_factor)*unique(rep)*(msd/qt(1-((unique(alpha)/2)/k),unique(df)))^2,3)
   return(mse)
 }
 Sidak_MSE_ab<- function(msd,rep,alpha,df,n_factor,n_other_factor){
   k<-choose(unique(n_factor),2)
-  mse<-0.5*unique(n_other_factor)*unique(rep)*(msd/qt(1-(1-(unique(alpha))/2)^(1/k),unique(df)))^2
+  mse<-round(0.5*unique(n_other_factor)*unique(rep)*(msd/qt(1-(1-(unique(alpha))/2)^(1/k),unique(df)))^2,3)
   return(mse)
 }
 Scheffe_MSE_ab<- function(msd,rep,alpha,df,n_factor,n_other_factor){
-  mse<-(unique(rep)*unique(n_other_factor)*msd^2)/(2*(unique(n_factor)-1)*qf(1-unique(alpha),unique(n_factor)-1,unique(df)))
+  mse<-round((unique(rep)*unique(n_other_factor)*msd^2)/(2*(unique(n_factor)-1)*qf(1-unique(alpha),unique(n_factor)-1,unique(df))),3)
   return(mse)
 }
 
@@ -190,7 +159,7 @@ disclosure_tab <- tabItem(
     including Fisher’s LSD, Tukey’s HSD, Scheffé's test, Bonferroni, and Šidák corrections for multiple comparisons."),
   br(),
   h4("Tutorial"),
-    p("A comprehensive evaluation of the tool and a walk-through tutorial
+  p("A comprehensive evaluation of the tool and a walk-through tutorial
       on how to use MSE FindR can be found", tags$a(href="https://github.com/vcgarnica/MSE_FindR","here.")),
   br(),
   h4("Example files"),
@@ -212,8 +181,8 @@ disclosure_tab <- tabItem(
   p("MSE FindR was developed to help researchers from multiple disciplines estimate the MSE from balanced experiments supported by the platform. 
     We welcome feedback and suggestions about the usefulness of the application and make no guarantee of the correctness, reliability, or utility 
     of the results if incorrect selections are made during the steps of MSE estimation. MSE FindR is freely accessible, and the source code is hosted at https://github.com/vcgarnica/MSE-FindR.")
-  )
-  
+)
+
 
 
 
@@ -241,28 +210,10 @@ upload_tab <-     tabItem(tabName = "FileUpload",
                                            selected = '"')),
                             mainPanel(
                               column(width = 12,
-                              DT::dataTableOutput('contents'))
+                                     DT::dataTableOutput('contents'))
                             )
                           )
 )
-
-
-# Splitter tab ----------------------------------------------
-
-splitter_tab <- tabItem(
-  tabName = "Splitter",
-  fluidPage(
-    h4("Means and letters"),
-    sidebarPanel(selectInput("get_let_mean",'Select column to be separated:',choices = NULL),
-          br(),
-          br(),
-          actionButton("splitter", "Separate")),
-  mainPanel(
-    column(width = 12,DT::dataTableOutput('contents1'))
-  )
-  )
-)
-
 
 # Estimator tab --------------------------------------------------------------------
 estimator_tab <-  tabItem(tabName = "Estimator",
@@ -334,15 +285,31 @@ estimator_tab <-  tabItem(tabName = "Estimator",
 
 # SideBar content =========================================================================
 
-sideBar_content <- dashboardSidebar(
-  shinyDashboardThemes(
-    theme = "grey_light"
+mytheme <- create_theme(
+  adminlte_color(
+    light_blue = "#434C5E"
   ),
+  adminlte_sidebar(
+    width = "400px",
+    dark_bg = "#D8DEE9",
+    dark_hover_bg = "#81A1D3",
+    dark_color = "#2E3440"
+  ),
+  adminlte_global(
+    content_bg = "#FFF",
+    box_bg = "#D8DEE9", 
+    info_box_bg = "#D8DEE9"
+  )
+)
+
+
+
+sideBar_content <- dashboardSidebar(
+  use_theme(mytheme),
   sidebarMenu(
     menuItem("Disclosure", tabName = "Disclosure"),
     menuItem("Upload file", tabName = "FileUpload"),
-    menuItem("Separate means and letters", tabName = "Splitter"),
-    menuItem("Estimator", tabName = "Estimator")
+     menuItem("Estimator", tabName = "Estimator")
   )
 )
 
@@ -351,8 +318,7 @@ sideBar_content <- dashboardSidebar(
 body_content <- dashboardBody(
   tabItems(
     disclosure_tab,
-    splitter_tab,
-    upload_tab,
+     upload_tab,
     estimator_tab
   )
 )
@@ -397,16 +363,6 @@ server <- function(input, output,session) {
   })
   
   
-  observeEvent(input$splitter, {
-    rv$data<-rv$data %>% mutate(clean_means=get_values(.data[[input$get_let_mean]]),
-                                clean_letters=get_letters(.data[[input$get_let_mean]])) 
-  })
-  
-  output$contents1 <- DT::renderDataTable({
-    DT::datatable(rv$data, options = list(searching = FALSE, scrollX = T))
-  })
-  
-  
   observe({
     value <- names(rv$data)
     updateSelectInput(session,"trial_id", choices = value)
@@ -447,7 +403,7 @@ server <- function(input, output,session) {
     updateSelectInput(session,"means_sp", choices = value)
     updateSelectInput(session,"letters_sp", choices = value)
   })
-
+  
   
   data_filtered<- reactive({
     req(rv$data)
@@ -456,7 +412,7 @@ server <- function(input, output,session) {
     # CDR, RCBD ---------------------------------------------------------------------------------------------------------
     if(input$exp_design == "Completely randomized design (CRD)" || input$exp_design == "Randomized complete block design (RCBD)") {
       dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A]])),
-                                                                                 n_replicates=(.data[[input$replicates]]))
+                                                                                  n_replicates=(.data[[input$replicates]]))
       
       if(input$exp_design == "Completely randomized design (CRD)") {
         dt<- dt %>% dplyr::group_by(.data[[input$trial_id]]) %>% dplyr::mutate(df_error = n_factor_A*(n_replicates-1))}
@@ -464,25 +420,25 @@ server <- function(input, output,session) {
         dt<- dt %>% dplyr::group_by(.data[[input$trial_id]]) %>% dplyr::mutate(df_error = (n_factor_A-1)*(n_replicates-1))}
     }
     # Latin ---------------------------------------------------------------------------------------------------------   
-      if(input$exp_design == "Latin square") {
-        dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_ls]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_ls]])),
-                                                                                      n_replicates= length(unique(.data[[input$factor_A_ls]])),
-                                                                                      df_error = (n_factor_A-1)*(n_factor_A-2))
+    if(input$exp_design == "Latin square") {
+      dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_ls]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_ls]])),
+                                                                                     n_replicates= length(unique(.data[[input$factor_A_ls]])),
+                                                                                     df_error = (n_factor_A-1)*(n_factor_A-2))
     }
     
     
     # Factorials ---------------------------------------------------------------------------------------------------------    
     if(input$exp_design == "Two-way complete factorial as a CRD" || input$exp_design == "Two-way complete factorial as a RCBD"){
-    if(input$variation_ab=="A"){
-      dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_aa]])),
-                                                                                    n_factor_B = (.data[[input$factor_B_aa]]),
-                                                                                    n_replicates=(.data[[input$replicates_ab]]))}
+      if(input$variation_ab=="A"){
+        dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_aa]])),
+                                                                                       n_factor_B = (.data[[input$factor_B_aa]]),
+                                                                                       n_replicates=(.data[[input$replicates_ab]]))}
       
       
-    if(input$variation_ab=="A x B"){
-      dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_ab]])),
-                                                                                    n_factor_B = length(unique(.data[[input$factor_B_ab]])),
-                                                                                    n_replicates=(.data[[input$replicates_ab]]))}   
+      if(input$variation_ab=="A x B"){
+        dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_ab]])),
+                                                                                       n_factor_B = length(unique(.data[[input$factor_B_ab]])),
+                                                                                       n_replicates=(.data[[input$replicates_ab]]))}   
       if(input$exp_design == "Two-way complete factorial as a CRD") {
         dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% dplyr::mutate(df_error = n_factor_A*n_factor_B*(n_replicates-1))}
       if(input$exp_design == "Two-way complete factorial as a RCBD") {
@@ -494,36 +450,36 @@ server <- function(input, output,session) {
     if(input$exp_design == "Split-plot as a CRD" || input$exp_design == "Split-plot as a RCBD"){
       if(input$variation_sp=="A"){
         dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_sp]])),
-                                                                                      n_factor_B = (.data[[input$factor_B_sp]]),
-                                                                                      n_replicates=(.data[[input$replicates_sp]]))}
+                                                                                       n_factor_B = (.data[[input$factor_B_sp]]),
+                                                                                       n_replicates=(.data[[input$replicates_sp]]))}
       
       if(input$variation_sp=="A within B"){
         dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_sp_ab]])),
-                                                                                      n_factor_B = length(unique(.data[[input$factor_B_sp_ab]])),
-                                                                                      n_replicates=(.data[[input$replicates_sp]]))}   
-
+                                                                                       n_factor_B = length(unique(.data[[input$factor_B_sp_ab]])),
+                                                                                       n_replicates=(.data[[input$replicates_sp]]))}   
+      
       if(input$variation_sp=="A"){
         if(input$radio_sp=="Main plot") {      
-        if(input$exp_design == "Split-plot as a CRD") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = n_factor_A*(n_replicates-1))}
-        if(input$exp_design == "Split-plot as a RCBD") { 
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = (n_factor_A-1)*(n_replicates-1))}         
-      }
+          if(input$exp_design == "Split-plot as a CRD") {
+            dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = n_factor_A*(n_replicates-1))}
+          if(input$exp_design == "Split-plot as a RCBD") { 
+            dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = (n_factor_A-1)*(n_replicates-1))}         
+        }
         if(input$radio_sp=="Sub plot") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = n_factor_B*(n_replicates-1)*(n_factor_A-1))}  
+          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = n_factor_B*(n_replicates-1)*(n_factor_A-1))}  
       }
       
       
       if(input$variation_sp=="A within B"){
-       dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = n_factor_A*(n_replicates-1)*(n_factor_B-1))
-       }   
-       
+        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = n_factor_A*(n_replicates-1)*(n_factor_B-1))
+      }   
+      
     }
-
+    
     return(dt)
     
   })
-
+  
   addData <- eventReactive(input$go_button, {
     # CDR and RCBD ---------------------------------------------------------------------------------------------------------
     if(input$exp_design == "Completely randomized design (CRD)" || input$exp_design == "Randomized complete block design (RCBD)"){
@@ -618,8 +574,8 @@ server <- function(input, output,session) {
       
       # A Main plot --------------------------------------------------------------------------------------------------------      
       if(input$variation_sp=="A"){
-      dt<-data_filtered()  %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% mutate(msd=mean(get_MSD(.data[[input$means_sp]],.data[[input$letters_sp]])$n))
-     
+        dt<-data_filtered()  %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% mutate(msd=mean(get_MSD(.data[[input$means_sp]],.data[[input$letters_sp]])$n))
+        
         if(input$mean_sep == "Fisher's LSD") {
           dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
             dplyr::mutate(MSE =  Fisher_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
@@ -637,13 +593,13 @@ server <- function(input, output,session) {
             dplyr::mutate(MSE = Scheffe_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_A,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}      
       }
       
-
+      
       # A within B  --------------------------------------------------------------------------------------------------------      
       if(input$variation_sp=="A within B"){ 
-      dt<-data_filtered()  %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>%
-        mutate(msd=mean(get_MSD_SP(.data[[input$means_sp]],.data[[input$letters_sp]],.data[[input$factor_A_sp_ab]])$n))
-      
-
+        dt<-data_filtered()  %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>%
+          mutate(msd=mean(get_MSD_SP(.data[[input$means_sp]],.data[[input$letters_sp]],.data[[input$factor_A_sp_ab]])$n))
+        
+        
         if(input$mean_sep == "Fisher's LSD") {
           dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
             dplyr::mutate(MSE =  Fisher_MSE(msd,n_replicates,input$alpha,df_error)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
@@ -668,11 +624,11 @@ server <- function(input, output,session) {
   })
   
   output$contents2 <- DT::renderDataTable({
-       DT::datatable(addData(), options = list(searching = FALSE, 
+    DT::datatable(addData(), options = list(searching = FALSE, 
                                             pageLength = 20,
                                             scrollX = T))
   })
-
+  
   
   output$downloadData01 <- downloadHandler(
     filename = function() {paste("result_SDFinder.csv",sep="")},
@@ -694,7 +650,7 @@ server <- function(input, output,session) {
       write.csv(read_csv(url(latin_fisher_raw)), file)
     }
   )  
-
+  
   output$rcbd_fisher <- downloadHandler(
     filename = function() {
       paste("rcbd_fisher.csv", sep="")
@@ -746,8 +702,8 @@ server <- function(input, output,session) {
       write.csv(read_csv(url(sp_rcbd_b_within_a_tukey_raw)), file)
     }
   )
-
-
+  
+  
 }
 
 
