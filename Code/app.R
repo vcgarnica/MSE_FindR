@@ -17,7 +17,6 @@ library("fresh")
 library ("readr")
 
 
-
 # Functions =================================================
 
 get_MSD<-function(value,letter){
@@ -233,54 +232,114 @@ estimator_tab <-  tabItem(tabName = "Estimator",
                                   uiOutput("downloadData")),
                               conditionalPanel(
                                 condition = "input.exp_design == 'Completely randomized design (CRD)' || input.exp_design == 'Randomized complete block design (RCBD)'",
-                                box(title = "Select columns", width = 5, solidHeader = T,
-                                    column(8, selectInput("trial_id", "Unique trial identifier number", NULL),
-                                           selectInput("factor_A", "Factor A", NULL),
-                                           selectInput("replicates", "Number of replicates or blocks", NULL),
-                                           selectInput("means", "Means", NULL),
-                                           selectInput("letters", "Post hoc test letters", NULL)))),
+                                box(title = "Column assignment", width = 5, solidHeader = T,
+                                    column(8, selectInput("trial_id", label = tags$span("Trial identifier number",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                         style = "color:#0072B2;",
+                                                                                                                         title = "Each trial in designated folder should be assigned a unique value – numerical values only")),NULL),
+                                           selectInput("factor_A", label = tags$span("Factor A",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                       style = "color:#0072B2;",
+                                                                                                       title = "Column for factor A treatments – either numerical or categorical")),NULL),
+                                           selectInput("replicates",label = tags$span("Number of replicates or blocks",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                              style = "color:#0072B2;",
+                                                                                                                              title = "Column for replicates or blocks. Only one value per trial - numerical")),NULL),
+                                           selectInput("means", label = tags$span("Means",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                 style = "color:#0072B2;",
+                                                                                                 title = "Column for treatment means. No post-hoc letters allowed - numerical")),NULL),
+                                           selectInput("letters", label = tags$span("Post hoc test letters",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                   style = "color:#0072B2;",
+                                                                                                                   title = "Column for post-hoc letters. No treatment means allowed - categorical")),NULL)))),
                               conditionalPanel(
                                 condition = "input.exp_design == 'Latin square'",
-                                box(title = "Specify Column", width = 5, solidHeader = T,
-                                    column(8, selectInput("trial_id_ls", "Trial Identifier Number", NULL),
-                                           selectInput("factor_A_ls", "Factor A", NULL),
-                                           selectInput("means_ls", "Means", NULL),
-                                           selectInput("letters_ls", "Post hoc test letters", NULL)))),
+                                box(title = "Column assignment", width = 5, solidHeader = T,
+                                    column(8, selectInput("trial_id_ls", label = tags$span("Trial identifier number",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                            style = "color:#0072B2;",
+                                                                                                                            title = "Each trial in designated folder should be assigned a unique value – numerical values only")),NULL),
+                                           selectInput("factor_A_ls", label = tags$span("Factor A",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                          style = "color:#0072B2;",
+                                                                                                          title = "Column for factor A treatments – either numerical or categorical")),NULL),
+                                           selectInput("means_ls", label = tags$span("Means",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                    style = "color:#0072B2;",
+                                                                                                    title = "Column for treatment means. No post-hoc letters allowed - numerical")),NULL),
+                                           selectInput("letters_ls", label = tags$span("Post hoc test letters",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                      style = "color:#0072B2;",
+                                                                                                                      title = "Column for post-hoc letters. No treatment means allowed - categorical")),NULL)))),
                               conditionalPanel(
                                 condition = "input.exp_design == 'Two-way complete factorial as a CRD' || input.exp_design == 'Two-way complete factorial as a RCBD' ",
-                                box(title = "Specify Column", width = 5, solidHeader = T, 
-                                    column(8, selectInput("trial_id_ab", "Unique trial identifier number", NULL),
-                                           selectInput("variation_ab", "Source of variation", choices = c("A","A x B")),
-                                           conditionalPanel( condition = "input.variation_ab == 'A'",
-                                                             fluidRow(column(8,selectInput("factor_A_aa", "Factor A", NULL))),
-                                                             fluidRow(column(8,selectInput("factor_B_aa", "Number of levels factor B", NULL)))),
+                                box(title = "Column assignment", width = 5, solidHeader = T, 
+                                    column(8, selectInput("trial_id_ab", label = tags$span("Trial identifier number",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                            style = "color:#0072B2;",
+                                                                                                                            title = "Each trial in designated folder should be assigned a unique value – numerical values only")),NULL),
+                                           selectInput("variation_ab", label = tags$span("Source of variation",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                      style = "color:#0072B2;",
+                                                                                                                      title = "When interaction is not significant & comparisons were performed for the main effect (one factor omitted), select A or B (used interchangeably in factorial designs). When interaction is significant & comparisons were performed for the interaction, select A x B")),choices = c("A or B","A x B")),
+                                           conditionalPanel( condition = "input.variation_ab == 'A or B'",
+                                                             fluidRow(column(8,selectInput("factor_A_aa", label = tags$span("Factor A or B",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                   style = "color:#0072B2;",
+                                                                                                                                                   title = "Column for either factor A or factor B treatments, used interchangeably in factorial designs – either numerical or categorical")),NULL))),
+                                                             fluidRow(column(8,selectInput("factor_B_aa", label = tags$span("Number of levels in omitted factor",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                                        style = "color:#0072B2;",
+                                                                                                                                                                        title = "If trial reports were carried out as a two-way factorial and only treatment means and post-hoc test for one factor are reported, users must indicate the number of levels of the omitted factor – numerical")),NULL)))),
                                            conditionalPanel( condition = "input.variation_ab == 'A x B'", 
-                                                             fluidRow(column(8,selectInput("factor_A_ab", "Factor A", NULL))),
-                                                             fluidRow(column(8,selectInput("factor_B_ab", "Factor B", NULL)))),
-                                           selectInput("replicates_ab", "Number of replicates", NULL),
-                                           selectInput("means_ab", "Means", NULL),
-                                           selectInput("letters_ab", "Post hoc test letters", NULL)))),
+                                                             fluidRow(column(8,selectInput("factor_A_ab", label = tags$span("Factor A",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                              style = "color:#0072B2;",
+                                                                                                                                              title = "Column for factor A treatments – either numerical or categorical")),NULL))),
+                                                             fluidRow(column(8,selectInput("factor_B_ab", label = tags$span("Factor B",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                              style = "color:#0072B2;",
+                                                                                                                                              title = "Column for factor B treatments – either numerical or categorical")),NULL)))),
+                                           selectInput("replicates_ab", label = tags$span("Number of replicates or blocks",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                  style = "color:#0072B2;",
+                                                                                                                                  title = "Column for replicates or blocks. Only one value per trial - numerical")),NULL),
+                                           selectInput("means_ab",label = tags$span("Means",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                   style = "color:#0072B2;",
+                                                                                                   title = "Column for treatment means. No post-hoc letters allowed - numerical")),NULL),
+                                           selectInput("letters_ab", label = tags$span("Post hoc test letters",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                      style = "color:#0072B2;",
+                                                                                                                      title = "Column for post-hoc letters. No treatment means allowed - categorical")),NULL)))),
                               conditionalPanel(
                                 condition = "input.exp_design == 'Split-plot as a CRD'  || input.exp_design == 'Split-plot as a RCBD'",
-                                box(title = "Specify Column", width = 6, solidHeader = T, 
-                                    column(8, selectInput("trial_id_sp", "Unique trial identifier number", NULL),
-                                           selectInput("variation_sp", "Source of variation", choices = c("A","A within B")),
-                                           conditionalPanel( condition = "input.variation_sp == 'A'", 
-                                                             fluidRow(column(8,selectInput("factor_A_sp", "Factor A", NULL)),radioButtons("radio_sp", "Level",list("Main plot","Sub plot"), inline = TRUE, selected = "Main plot")),
-                                                             fluidRow(column(8,selectInput("factor_B_sp", "Number of levels factor B", NULL)))),
-                                           conditionalPanel( condition = "input.variation_sp == 'A within B'", 
-                                                             fluidRow(column(8,selectInput("factor_A_sp_ab", "Factor A (Sub plot Level)", NULL))),
-                                                             fluidRow(column(8,selectInput("factor_B_sp_ab", "Factor B (Main plot Level)", NULL)))),
-                                           selectInput("replicates_sp", "Number of replicates", NULL),
-                                           selectInput("means_sp", "Means", NULL),
-                                           selectInput("letters_sp", "Post hoc test letters", NULL))))),
+                                box(title = "Column assignment", width = 6, solidHeader = T, 
+                                    column(8, selectInput("trial_id_sp", label = tags$span("Trial identifier number",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                            style = "color:#0072B2;",
+                                                                                                                            title = "Each trial in designated folder should be assigned a unique value – numerical values only")),NULL),
+                                           selectInput("variation_sp", label = tags$span("Source of variation",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                      style = "color:#0072B2;",
+                                                                                                                      title = "When interaction is not significant & comparisons were performed for the main effect (one factor omitted) & were assinged to main-plot units, select A (main-plot). Similarly, when interaction is not significant & comparisons were performed for the main effect (one factor omitted) & were assinged to sub-plot units, select B (sub-plot). When interaction is significant & trials report treatment means and post-hoc test results for the interaction & comparisons were performed among main-plot levels within common subplot levels, select A (main-plot) within B (sub-plot)")),choices = c("A (main-plot)","B (sub-plot)","A (main-plot) within B (sub-plot)")),
+                                           conditionalPanel( condition = "input.variation_sp == 'A (main-plot)'", 
+                                                             fluidRow(column(8,selectInput("factor_A_sp", label = tags$span("Factor A (main-plot)",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                          style = "color:#0072B2;",
+                                                                                                                                                          title = "Column for factor A treatments assigned to the main-plot units – either numerical or categorical")),NULL))),
+                                                             fluidRow(column(8,selectInput("factor_B_omit_sp", label = tags$span("Number of levels in omitted factor",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                                             style = "color:#0072B2;",
+                                                                                                                                                                             title = "If trial reports were carried out as a two-way split-plot and only treatment means and post-hoc test for one factor are reported, users must indicate the number of levels of the omitted factor – numerical")),NULL)))),                                           
+                                           conditionalPanel( condition = "input.variation_sp == 'B (sub-plot)'", 
+                                                             fluidRow(column(8,selectInput("factor_A_omit_sp", label = tags$span("Number of levels in omitted factor",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                                             style = "color:#0072B2;",
+                                                                                                                                                                             title = "If trial reports were carried out as a two-way split-plot and only treatment means and post-hoc test for one factor are reported, users must indicate the number of levels of the omitted factor – numerical")),NULL))),
+                                                             fluidRow(column(8,selectInput("factor_B_sp", label = tags$span("Factor B (sub-plot)",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                         style = "color:#0072B2;",
+                                                                                                                                                         title = "Column for factor B treatments assigned to the sub-plot units – either numerical or categorical")),NULL)))),                                       
+                                           conditionalPanel( condition = "input.variation_sp == 'A (main-plot) within B (sub-plot)'", 
+                                                             fluidRow(column(8,selectInput("factor_A_sp_ab", label = tags$span("Factor A (main-plot)",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                             style = "color:#0072B2;",
+                                                                                                                                                             title = "Column for factor A treatments assigned to the main-plot units – either numerical or categorical")),NULL))),
+                                                             fluidRow(column(8,selectInput("factor_B_sp_ab", label = tags$span("Factor B (sub-plot)",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                                            style = "color:#0072B2;",
+                                                                                                                                                            title = "Column for factor B treatments assigned to the sub-plot units – either numerical or categorical")),NULL)))),
+                                           selectInput("replicates_sp", label = tags$span("Number of replicates or blocks",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                                  style = "color:#0072B2;",
+                                                                                                                                  title = "Column for replicates or blocks. Only one value per trial - numerical")),NULL),
+                                           selectInput("means_sp", label = tags$span("Means",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                    style = "color:#0072B2;",
+                                                                                                    title = "Column for treatment means. No post-hoc letters allowed - numerical")),NULL),
+                                           selectInput("letters_sp", label = tags$span("Post hoc test letters",tags$i(class = "glyphicon glyphicon-info-sign",
+                                                                                                                      style = "color:#0072B2;",
+                                                                                                                      title = "Column for post-hoc letters. No treatment means allowed - categorical")),NULL))))),
                             br(),
                             column(12,
                                    DT::dataTableOutput('contents2')
                             )
                           )
 )
-
 
 
 # SideBar content =========================================================================
@@ -309,7 +368,7 @@ sideBar_content <- dashboardSidebar(
   sidebarMenu(
     menuItem("Disclosure", tabName = "Disclosure"),
     menuItem("Upload file", tabName = "FileUpload"),
-     menuItem("Estimator", tabName = "Estimator")
+    menuItem("Estimator", tabName = "Estimator")
   )
 )
 
@@ -318,7 +377,7 @@ sideBar_content <- dashboardSidebar(
 body_content <- dashboardBody(
   tabItems(
     disclosure_tab,
-     upload_tab,
+    upload_tab,
     estimator_tab
   )
 )
@@ -397,7 +456,9 @@ server <- function(input, output,session) {
     updateSelectInput(session,"trial_id_sp", choices = value)
     updateSelectInput(session,"replicates_sp", choices =value)
     updateSelectInput(session,"factor_A_sp", choices = value)
+    updateSelectInput(session,"factor_B_omit_sp", choices = value)    
     updateSelectInput(session,"factor_B_sp", choices = value)
+    updateSelectInput(session,"factor_A_omit_sp", choices = value)
     updateSelectInput(session,"factor_A_sp_ab", choices = value)
     updateSelectInput(session,"factor_B_sp_ab", choices = value)
     updateSelectInput(session,"means_sp", choices = value)
@@ -405,223 +466,200 @@ server <- function(input, output,session) {
   })
   
   
-  data_filtered<- reactive({
+  data_filtered <- reactive({
     req(rv$data)
     validate(need(input$file1 != "", "Data set must be uploaded"))
     
-    # CDR, RCBD ---------------------------------------------------------------------------------------------------------
-    if(input$exp_design == "Completely randomized design (CRD)" || input$exp_design == "Randomized complete block design (RCBD)") {
-      dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A]])),
-                                                                                  n_replicates=(.data[[input$replicates]]))
-      
-      if(input$exp_design == "Completely randomized design (CRD)") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id]]) %>% dplyr::mutate(df_error = n_factor_A*(n_replicates-1))}
-      if(input$exp_design == "Randomized complete block design (RCBD)") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id]]) %>% dplyr::mutate(df_error = (n_factor_A-1)*(n_replicates-1))}
-    }
-    # Latin ---------------------------------------------------------------------------------------------------------   
-    if(input$exp_design == "Latin square") {
-      dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_ls]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_ls]])),
-                                                                                     n_replicates= length(unique(.data[[input$factor_A_ls]])),
-                                                                                     df_error = (n_factor_A-1)*(n_factor_A-2))
-    }
+    dt <- rv$data
     
-    
-    # Factorials ---------------------------------------------------------------------------------------------------------    
-    if(input$exp_design == "Two-way complete factorial as a CRD" || input$exp_design == "Two-way complete factorial as a RCBD"){
-      if(input$variation_ab=="A"){
-        dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_aa]])),
-                                                                                       n_factor_B = (.data[[input$factor_B_aa]]),
-                                                                                       n_replicates=(.data[[input$replicates_ab]]))}
-      
-      
-      if(input$variation_ab=="A x B"){
-        dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_ab]])),
-                                                                                       n_factor_B = length(unique(.data[[input$factor_B_ab]])),
-                                                                                       n_replicates=(.data[[input$replicates_ab]]))}   
-      if(input$exp_design == "Two-way complete factorial as a CRD") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% dplyr::mutate(df_error = n_factor_A*n_factor_B*(n_replicates-1))}
-      if(input$exp_design == "Two-way complete factorial as a RCBD") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% dplyr::mutate(df_error = (n_factor_A*n_factor_B-1)*(n_replicates-1))}
-      
-    }
-    
-    # Split Plot ---------------------------------------------------------------------------------------------------------    
-    if(input$exp_design == "Split-plot as a CRD" || input$exp_design == "Split-plot as a RCBD"){
-      if(input$variation_sp=="A"){
-        dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_sp]])),
-                                                                                       n_factor_B = (.data[[input$factor_B_sp]]),
-                                                                                       n_replicates=(.data[[input$replicates_sp]]))}
-      
-      if(input$variation_sp=="A within B"){
-        dt<- rv$data %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(n_factor_A = length(unique(.data[[input$factor_A_sp_ab]])),
-                                                                                       n_factor_B = length(unique(.data[[input$factor_B_sp_ab]])),
-                                                                                       n_replicates=(.data[[input$replicates_sp]]))}   
-      
-      if(input$variation_sp=="A"){
-        if(input$radio_sp=="Main plot") {      
-          if(input$exp_design == "Split-plot as a CRD") {
-            dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = n_factor_A*(n_replicates-1))}
-          if(input$exp_design == "Split-plot as a RCBD") { 
-            dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = (n_factor_A-1)*(n_replicates-1))}         
-        }
-        if(input$radio_sp=="Sub plot") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = n_factor_B*(n_replicates-1)*(n_factor_A-1))}  
+    if (input$exp_design == "Completely randomized design (CRD)" || input$exp_design == "Randomized complete block design (RCBD)") {
+      dt <- dt %>%
+        dplyr::group_by(.data[[input$trial_id]]) %>%
+        dplyr::mutate(
+          n_factor_A = length(unique(.data[[input$factor_A]])),
+          n_replicates = .data[[input$replicates]],
+          df_error = if (input$exp_design == "Completely randomized design (CRD)") {
+            n_factor_A * (n_replicates - 1)
+          } else {
+            (n_factor_A - 1) * (n_replicates - 1)
+          }
+        )
+    } else if (input$exp_design == "Latin square") {
+      dt <- dt %>%
+        dplyr::group_by(.data[[input$trial_id_ls]]) %>%
+        dplyr::mutate(
+          n_factor_A = length(unique(.data[[input$factor_A_ls]])),
+          n_replicates = length(unique(.data[[input$factor_A_ls]])),
+          df_error = (n_factor_A - 1) * (n_factor_A - 2)
+        )
+    } else if (input$exp_design == "Two-way complete factorial as a CRD" || input$exp_design == "Two-way complete factorial as a RCBD") {
+      if (input$variation_ab == "A or B") {
+        dt <- dt %>%
+          dplyr::group_by(.data[[input$trial_id_ab]]) %>%
+          dplyr::mutate(
+            n_factor_A = length(unique(.data[[input$factor_A_aa]])),
+            n_factor_B = (.data[[input$factor_B_aa]]),
+            n_replicates = (.data[[input$replicates_ab]])
+          )
+      } else if (input$variation_ab == "A x B") {
+        dt <- dt %>%
+          dplyr::group_by(.data[[input$trial_id_ab]]) %>%
+          dplyr::mutate(
+            n_factor_A = length(unique(.data[[input$factor_A_ab]])),
+            n_factor_B = length(unique(.data[[input$factor_B_ab]])),
+            n_replicates = (.data[[input$replicates_ab]])
+          )
       }
       
+      if (input$exp_design == "Two-way complete factorial as a CRD") {
+        dt <- dt %>%
+          dplyr::group_by(.data[[input$trial_id_ab]]) %>%
+          dplyr::mutate(df_error = n_factor_A * n_factor_B * (n_replicates - 1))
+      } else if (input$exp_design == "Two-way complete factorial as a RCBD") {
+        dt <- dt %>%
+          dplyr::group_by(.data[[input$trial_id_ab]]) %>%
+          dplyr::mutate(df_error = (n_factor_A * n_factor_B - 1) * (n_replicates - 1))
+      }
+    } else if (input$exp_design == "Split-plot as a CRD" || input$exp_design == "Split-plot as a RCBD") {
+      if (input$variation_sp == "A (main-plot)") {
+        dt <- dt %>%
+          dplyr::group_by(.data[[input$trial_id_sp]]) %>%
+          dplyr::mutate(
+            n_factor_A = length(unique(.data[[input$factor_A_sp]])),
+            n_factor_B = (.data[[input$factor_B_omit_sp]]),
+            n_replicates = (.data[[input$replicates_sp]])
+          )
+      } else if (input$variation_sp == "B (sub-plot)") {
+        dt <- dt %>%
+          dplyr::group_by(.data[[input$trial_id_sp]]) %>%
+          dplyr::mutate(
+            n_factor_A = (.data[[input$factor_A_omit_sp]]),
+            n_factor_B = length(unique(.data[[input$factor_B_sp]])),
+            n_replicates = (.data[[input$replicates_sp]])
+          )
+      } else if (input$variation_sp == "A within B") {
+        dt <- dt %>%
+          dplyr::group_by(.data[[input$trial_id_sp]]) %>%
+          dplyr::mutate(
+            n_factor_A = length(unique(.data[[input$factor_A_sp_ab]])),
+            n_factor_B = length(unique(.data[[input$factor_B_sp_ab]])),
+            n_replicates = (.data[[input$replicates_sp]])
+          )
+      }
       
-      if(input$variation_sp=="A within B"){
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% dplyr::mutate(df_error = n_factor_A*(n_replicates-1)*(n_factor_B-1))
-      }   
-      
+      if (input$variation_sp == "A (main-plot") {
+        if (input$exp_design == "Split-plot as a CRD") {
+          dt <- dt %>%
+            dplyr::group_by(.data[[input$trial_id_sp]]) %>%
+            dplyr::mutate(df_error = n_factor_A * (n_replicates - 1))
+        } else if (input$exp_design == "Split-plot as a RCBD") {
+          dt <- dt %>%
+            dplyr::group_by(.data[[input$trial_id_sp]]) %>%
+            dplyr::mutate(df_error = (n_factor_A - 1) * (n_replicates - 1))
+        }
+      } else if (input$variation_sp == "B (sub-plot)" || "A (main-plot) within B (sub-plot)") {
+        dt <- dt %>%
+          dplyr::group_by(.data[[input$trial_id_sp]]) %>%
+          dplyr::mutate(df_error = n_factor_A * (n_replicates - 1) * (n_factor_B - 1))
+      } 
     }
     
     return(dt)
-    
   })
   
+  
+  
+  
   addData <- eventReactive(input$go_button, {
-    # CDR and RCBD ---------------------------------------------------------------------------------------------------------
-    if(input$exp_design == "Completely randomized design (CRD)" || input$exp_design == "Randomized complete block design (RCBD)"){
-      dt<-data_filtered()  %>% dplyr::group_by(.data[[input$trial_id]]) %>% mutate(msd=mean(get_MSD(.data[[input$means]],.data[[input$letters]])$n))
-      
-      if(input$mean_sep == "Fisher's LSD") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id]]) %>% 
-          dplyr::mutate(MSE = Fisher_MSE(msd,n_replicates,input$alpha,df_error)) %>% dplyr::select(-msd,-n_factor_A,-n_replicates) }
-      if(input$mean_sep == "Tukey's HSD") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id]]) %>% 
-          dplyr::mutate(MSE = Tukey_MSE(msd,n_replicates,input$alpha,df_error,n_factor_A)) %>% dplyr::select(-msd,-n_factor_A,-n_replicates) }
-      if(input$mean_sep == "Bonferroni correction for multiple comparison") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id]]) %>% 
-          dplyr::mutate(MSE = Bonferroni_MSE(msd,n_replicates,input$alpha,df_error,n_factor_A)) %>% dplyr::select(-msd,-n_factor_A,-n_replicates)}
-      if(input$mean_sep == "Sidak correction for multiple comparison") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id]]) %>% 
-          dplyr::mutate(MSE = Sidak_MSE(msd,n_replicates,input$alpha,df_error,n_factor_A)) %>% dplyr::select(-msd,-n_factor_A,-n_replicates)}       
-      if(input$mean_sep == "Scheffe's") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id]]) %>% 
-          dplyr::mutate(MSE = Scheffe_MSE(msd,n_replicates,input$alpha,df_error,n_factor_A)) %>% dplyr::select(-msd,-n_factor_A,-n_replicates)}      
-    }
+    dt <- data_filtered()
     
-    # Latin ---------------------------------------------------------------------------------------------------------   
-    if(input$exp_design == "Latin square"){
-      dt<-data_filtered()  %>% dplyr::group_by(.data[[input$trial_id_ls]]) %>% mutate(msd=mean(get_MSD(.data[[input$means_ls]],.data[[input$letters_ls]])$n))
-      
-      if(input$mean_sep == "Fisher's LSD") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ls]]) %>% 
-          dplyr::mutate(MSE = Fisher_MSE(msd,n_replicates,input$alpha,df_error)) %>% dplyr::select(-msd,-n_factor_A,-n_replicates)}
-      if(input$mean_sep == "Tukey's HSD") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ls]]) %>% 
-          dplyr::mutate(MSE = Tukey_MSE(msd,n_replicates,input$alpha,df_error,n_factor_A)) %>% dplyr::select(-msd,-n_factor_A,-n_replicates)}
-      if(input$mean_sep == "Bonferroni correction for multiple comparison") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ls]]) %>% 
-          dplyr::mutate(MSE = Bonferroni_MSE(msd,n_replicates,input$alpha,df_error,n_factor_A)) %>% dplyr::select(-msd,-n_factor_A,-n_replicates)}
-      if(input$mean_sep == "Sidak correction for multiple comparison") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ls]]) %>% 
-          dplyr::mutate(MSE = Sidak_MSE(msd,n_replicates,input$alpha,df_error,n_factor_A)) %>% dplyr::select(-msd,-n_factor_A,-n_replicates) }       
-      if(input$mean_sep == "Scheffe's") {
-        dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ls]]) %>% 
-          dplyr::mutate(MSE = Scheffe_MSE(msd,n_replicates,input$alpha,df_error,n_factor_A)) %>% dplyr::select(-msd,-n_factor_A,-n_replicates)}      
-    }
-    
-    # Factorials ---------------------------------------------------------------------------------------------------------    
-    if(input$exp_design == "Two-way complete factorial as a CRD" || input$exp_design == "Two-way complete factorial as a RCBD"){
-      dt<-data_filtered()  %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% mutate(msd=mean(get_MSD(.data[[input$means_ab]],.data[[input$letters_ab]])$n))
-      
-      
-      if(input$variation_ab=="A"){
-        # A --------------------------------------------------------------------------------------------------------         
-        if(input$mean_sep == "Fisher's LSD") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% 
-            dplyr::mutate(MSE =  Fisher_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Tukey's HSD") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% 
-            dplyr::mutate(MSE = Tukey_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_A,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Bonferroni correction for multiple comparison") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% 
-            dplyr::mutate(MSE = Bonferroni_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_A,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Sidak correction for multiple comparison") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% 
-            dplyr::mutate(MSE = Sidak_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_A,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}       
-        if(input$mean_sep == "Scheffe's") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% 
-            dplyr::mutate(MSE = Scheffe_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_A,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}      
-        
-      }
-      
-      if(input$variation_ab=="A x B"){      
-        # A x B --------------------------------------------------------------------------------------------------------
-        if(input$mean_sep == "Fisher's LSD") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% 
-            dplyr::mutate(MSE =  Fisher_MSE(msd,n_replicates,input$alpha,df_error)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Tukey's HSD") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% 
-            dplyr::mutate(MSE = Tukey_MSE(msd,n_replicates,input$alpha,df_error,(n_factor_A*n_factor_B))) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Bonferroni correction for multiple comparison") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% 
-            dplyr::mutate(MSE = Bonferroni_MSE(msd,n_replicates,input$alpha,df_error,(n_factor_A*n_factor_B))) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Sidak correction for multiple comparison") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% 
-            dplyr::mutate(MSE = Sidak_MSE(msd,n_replicates,input$alpha,df_error,(n_factor_A*n_factor_B))) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}       
-        if(input$mean_sep == "Scheffe's") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_ab]]) %>% 
-            dplyr::mutate(MSE = Scheffe_MSE(msd,n_replicates,input$alpha,df_error,(n_factor_A*n_factor_B))) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        
-      }
-    }  
-    
-    # Split Plot ---------------------------------------------------------------------------------------------------------    
-    if(input$exp_design == "Split-plot as a CRD" || input$exp_design == "Split-plot as a RCBD"){
-      
-      # A Main plot --------------------------------------------------------------------------------------------------------      
-      if(input$variation_sp=="A"){
-        dt<-data_filtered()  %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% mutate(msd=mean(get_MSD(.data[[input$means_sp]],.data[[input$letters_sp]])$n))
-        
-        if(input$mean_sep == "Fisher's LSD") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
-            dplyr::mutate(MSE =  Fisher_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Tukey's HSD") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
-            dplyr::mutate(MSE = Tukey_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_A,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Bonferroni correction for multiple comparison") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
-            dplyr::mutate(MSE = Bonferroni_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_A,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Sidak correction for multiple comparison") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
-            dplyr::mutate(MSE = Sidak_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_A,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}       
-        if(input$mean_sep == "Scheffe's") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
-            dplyr::mutate(MSE = Scheffe_MSE_ab(msd,n_replicates,input$alpha,df_error,n_factor_A,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}      
-      }
-      
-      
-      # A within B  --------------------------------------------------------------------------------------------------------      
-      if(input$variation_sp=="A within B"){ 
-        dt<-data_filtered()  %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>%
-          mutate(msd=mean(get_MSD_SP(.data[[input$means_sp]],.data[[input$letters_sp]],.data[[input$factor_A_sp_ab]])$n))
-        
-        
-        if(input$mean_sep == "Fisher's LSD") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
-            dplyr::mutate(MSE =  Fisher_MSE(msd,n_replicates,input$alpha,df_error)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Tukey's HSD") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
-            dplyr::mutate(MSE = Tukey_MSE(msd,n_replicates,input$alpha,df_error,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Bonferroni correction for multiple comparison") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
-            dplyr::mutate(MSE = Bonferroni_MSE(msd,n_replicates,input$alpha,df_error,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        if(input$mean_sep == "Sidak correction for multiple comparison") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
-            dplyr::mutate(MSE = Sidak_MSE(msd,n_replicates,input$alpha,df_error,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}       
-        if(input$mean_sep == "Scheffe's") {
-          dt<- dt %>% dplyr::group_by(.data[[input$trial_id_sp]]) %>% 
-            dplyr::mutate(MSE = Scheffe_MSE(msd,n_replicates,input$alpha,df_error,n_factor_B)) %>% dplyr::select(-msd,-n_factor_A,-n_factor_B,-n_replicates)}
-        
-      }
+    if (input$exp_design == "Completely randomized design (CRD)" || input$exp_design == "Randomized complete block design (RCBD)") {
+      dt <- dt %>%
+        dplyr::group_by(.data[[input$trial_id]]) %>%
+        mutate(
+          msd = mean(get_MSD(.data[[input$means]], .data[[input$letters]])$n),
+          MSE = switch(input$mean_sep,
+                       "Fisher's LSD" = Fisher_MSE(msd, n_replicates, input$alpha, df_error),
+                       "Tukey's HSD" = Tukey_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A),
+                       "Bonferroni correction for multiple comparison" = Bonferroni_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A),
+                       "Sidak correction for multiple comparison" = Sidak_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A),
+                       "Scheffe's" = Scheffe_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A)
+          )
+        ) %>%
+        select(-msd, -n_factor_A, -n_replicates)
+    } else if (input$exp_design == "Latin square") {
+      dt <- dt %>%
+        dplyr::group_by(.data[[input$trial_id_ls]]) %>%
+        mutate(
+          msd = mean(get_MSD(.data[[input$means_ls]], .data[[input$letters_ls]])$n),
+          MSE = switch(input$mean_sep,
+                       "Fisher's LSD" = Fisher_MSE(msd, n_replicates, input$alpha, df_error),
+                       "Tukey's HSD" = Tukey_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A),
+                       "Bonferroni correction for multiple comparison" = Bonferroni_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A),
+                       "Sidak correction for multiple comparison" = Sidak_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A),
+                       "Scheffe's" = Scheffe_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A)
+          )
+        ) %>%
+        select(-msd, -n_factor_A, -n_replicates)
+    } else if (input$exp_design == "Two-way complete factorial as a CRD" || input$exp_design == "Two-way complete factorial as a RCBD") {
+      dt <- dt %>%
+        dplyr::group_by(.data[[input$trial_id_ab]]) %>%
+        mutate(
+          msd = mean(get_MSD(.data[[input$means_ab]], .data[[input$letters_ab]])$n),
+          MSE = if (input$variation_ab == "A or B") {
+            switch(input$mean_sep,
+                   "Fisher's LSD" = Fisher_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_B),
+                   "Tukey's HSD" = Tukey_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_A, n_factor_B),
+                   "Bonferroni correction for multiple comparison" = Bonferroni_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_A, n_factor_B),
+                   "Sidak correction for multiple comparison" = Sidak_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_A, n_factor_B),
+                   "Scheffe's" = Scheffe_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_A, n_factor_B)
+            )
+          } else {
+            switch(input$mean_sep,
+                   "Fisher's LSD" = Fisher_MSE(msd, n_replicates, input$alpha, df_error),
+                   "Tukey's HSD" = Tukey_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A * n_factor_B),
+                   "Bonferroni correction for multiple comparison" = Bonferroni_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A * n_factor_B),
+                   "Sidak correction for multiple comparison" = Sidak_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A * n_factor_B),
+                   "Scheffe's" = Scheffe_MSE(msd, n_replicates, input$alpha, df_error, n_factor_A * n_factor_B)
+            )
+          }
+        ) %>%
+        select(-msd, -n_factor_A, -n_factor_B, -n_replicates)
+    } else if (input$exp_design == "Split-plot as a CRD" || input$exp_design == "Split-plot as a RCBD") {
+      dt <- dt %>%
+        dplyr::group_by(.data[[input$trial_id_sp]]) %>%
+        mutate(
+          msd = mean(get_MSD(.data[[input$means_sp]], .data[[input$letters_sp]])$n),
+          MSE = switch(input$variation_sp,
+                       "A (main-plot)" = switch(input$mean_sep,
+                                                "Fisher's LSD" = Fisher_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_B),
+                                                "Tukey's HSD" = Tukey_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_A, n_factor_B),
+                                                "Bonferroni correction for multiple comparison" = Bonferroni_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_A, n_factor_B),
+                                                "Sidak correction for multiple comparison" = Sidak_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_A, n_factor_B),
+                                                "Scheffe's" = Scheffe_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_A, n_factor_B)
+                       ),
+                       "B (sub-plot)" = switch(input$mean_sep,
+                                               "Fisher's LSD" = Fisher_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_A),
+                                               "Tukey's HSD" = Tukey_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_B, n_factor_A),
+                                               "Bonferroni correction for multiple comparison" = Bonferroni_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_B, n_factor_A),
+                                               "Sidak correction for multiple comparison" = Sidak_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_B, n_factor_A),
+                                               "Scheffe's" = Scheffe_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_B, n_factor_A)
+                       ),
+                       "A (main-plot) within B (sub-plot)" = switch(input$mean_sep,
+                                                                    "Fisher's LSD" = Fisher_MSE(msd, n_replicates, input$alpha, df_error),
+                                                                    "Tukey's HSD" = Tukey_MSE(msd, n_replicates, input$alpha, df_error, n_factor_B),
+                                                                    "Bonferroni correction for multiple comparison" = Bonferroni_MSE(msd, n_replicates, input$alpha, df_error, n_factor_B),
+                                                                    "Sidak correction for multiple comparison" = Sidak_MSE(msd, n_replicates, input$alpha, df_error, n_factor_B),
+                                                                    "Scheffe's" = Scheffe_MSE(msd, n_replicates, input$alpha, df_error, n_factor_B)
+                       )
+          )
+        ) %>%
+        select(-msd, n_factor_A, n_factor_B, n_replicates)
     }
     
     return(dt)
-    
   })
+  
   
   output$contents2 <- DT::renderDataTable({
     DT::datatable(addData(), options = list(searching = FALSE, 
@@ -631,7 +669,7 @@ server <- function(input, output,session) {
   
   
   output$downloadData01 <- downloadHandler(
-    filename = function() {paste("result_SDFinder.csv",sep="")},
+    filename = function() {paste("result_MSEFindR.csv",sep="")},
     content = function(file) {write.csv(addData(), file)}
   )
   
