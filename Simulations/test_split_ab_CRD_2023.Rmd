@@ -1,0 +1,872 @@
+---
+title: "Simulations for Split plot Design arranged as CRD"
+author: "Vinicius C. Garnica and Denis A. Shah"
+date: "2/8/2023"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=1, digits=2)
+```
+
+
+```{r Library,warning=FALSE,message=FALSE}
+library(tidyverse)
+library(multcomp)
+library(agricolae)
+library(emmeans)
+library(lme4)
+library(furrr) 
+library(data.table)
+library(DescTools)
+theme_set(theme_bw())
+```
+
+```{r Algorithm and Post hoc test formulas}
+{
+get_MSD=function(value,letter){
+  require(data.table)
+  letter=letter[order(value,decreasing = T)]
+  value=value[order(value,decreasing = T)]
+  n=abs(apply(combn(value,2), 2, diff))
+  l=combn(letter,2)
+  dt=as.data.table(t(rbind(n,l)))
+  dt$n=as.numeric(dt$n)
+  dt$range=sequence((length(value)-1):1)+1
+  dt=dt[order(dt$n),]
+  dt$inter = !sapply(gsub(" ", "", paste(dt$V2, dt$V3)), function(x) any(str_count(x, letters)>1))
+  dt[dt==""]=NA
+  dt=na.omit(dt)
+  if(all(dt$V2==dt$V3) || length(rle(dt$inter)$lengths)==1){
+    data=as.data.table(rbind(rep(NA,ncol(dt)),rep(NA,ncol(dt))))
+    colnames(data) = colnames(dt)
+    return(data)}
+  else{
+    msd_1=dt[inter==FALSE, .SD[which.max(n)], by=inter] 
+    msd_2=dt[inter==TRUE, .SD[which.min(n)], by=inter]
+    msd=rbind(msd_1,msd_2)}
+  return(msd) 
+}
+
+get_MSD_SP=function(value,letter,group){
+  require(data.table)
+  n=abs(apply(combn(value,2), 2, diff))
+  l=combn(letter,2)
+  k=combn(group,2)
+  dt=as.data.table(t(rbind(n,l,k)))
+  dt$n=as.numeric(dt$n)
+  dt=dt[order(dt$n),]
+  dt$inter = !sapply(gsub(" ", "", paste(dt$V2, dt$V3)), function(x) any(str_count(x, letters)>1))
+  dt[dt==""]=NA
+  dt=na.omit(dt)
+  dt=dt[dt$V4==dt$V5,]
+  if(all(dt$V2==dt$V3) || length(rle(dt$inter)$lengths)==1){
+    data=as.data.table(rbind(rep(NA,ncol(dt)),rep(NA,ncol(dt))))
+    colnames(data) = colnames(dt)
+    return(data)}
+  else{
+    msd_1=dt[inter==FALSE, .SD[which.max(n)], by=inter] 
+    msd_2=dt[inter==TRUE, .SD[which.min(n)], by=inter]
+    msd=rbind(msd_1,msd_2)}
+  return(msd) 
+}
+   
+
+Fisher_MSE= function(msd,rep,alpha,df){
+  mse=0.5*unique(rep)*(msd/qt(1-unique(alpha)/2,unique(df)))^2
+  return(mse)}
+Tukey_MSE= function(msd,rep,alpha,df,n_factor){
+  mse=unique(rep)*(msd/qtukey(1-unique(alpha),unique(n_factor),unique(df)))^2
+  return(mse)
+}
+Bonferroni_MSE= function(msd,rep,alpha,df,n_factor){
+  k=choose(unique(n_factor),2)
+  mse=0.5*unique(rep)*(msd/qt(1-((unique(alpha)/2)/k),unique(df)))^2
+  return(mse)
+}
+Sidak_MSE= function(msd,rep,alpha,df,n_factor){
+  k=choose(unique(n_factor),2)
+  mse=0.5*unique(rep)*(msd/qt(1-(1-(unique(alpha))/2)^(1/k),unique(df)))^2
+  return(mse)
+}
+Scheffe_MSE= function(msd,rep,alpha,df,n_factor){
+  mse=(unique(rep)*msd^2)/(2*(unique(n_factor)-1)*qf(1-unique(alpha),unique(n_factor)-1,unique(df)))
+  return(mse)
+}
+
+# ---------------------------------------------------------------
+
+Fisher_MSE_ab= function(msd,rep,alpha,df,n_other_factor){
+  mse=0.5*unique(rep)*unique(n_other_factor)*(msd/qt(1-alpha/2,df))^2
+  return(mse)
+}
+Tukey_MSE_ab= function(msd,rep,alpha,df,n_factor,n_other_factor){
+  mse=unique(n_other_factor)*unique(rep)*(msd/qtukey(1-unique(alpha),unique(n_factor),unique(df)))^2
+  return(mse)
+}
+Bonferroni_MSE_ab= function(msd,rep,alpha,df,n_factor,n_other_factor){
+  k=choose(unique(n_factor),2)
+  mse=0.5*unique(n_other_factor)*unique(rep)*(msd/qt(1-((unique(alpha)/2)/k),unique(df)))^2
+  return(mse)
+}
+Sidak_MSE_ab= function(msd,rep,alpha,df,n_factor,n_other_factor){
+  k=choose(unique(n_factor),2)
+  mse=0.5*unique(n_other_factor)*unique(rep)*(msd/qt(1-(1-(unique(alpha))/2)^(1/k),unique(df)))^2
+  return(mse)
+}
+Scheffe_MSE_ab= function(msd,rep,alpha,df,n_factor,n_other_factor){
+  mse=(unique(rep)*unique(n_other_factor)*msd^2)/(2*(unique(n_factor)-1)*qf(1-unique(alpha),unique(n_factor)-1,unique(df)))
+  return(mse)
+}
+}
+```
+
+```{r Helper-functions}
+# Two-way interaction helper function:
+two.way.fxn = function(x, y,int_mu, int_sd, seed) {
+  # Interaction effect (when the i-th level of A and the j-th level of B are combined):
+  # Args:
+  #  x = the number of levels of factor 1
+  #  y = the number of levels of factor 2
+  #  seed = seed for RNG
+  # Returns:
+  # a x by y matrix of sampled numbers from a standard normal distribution N(0, 1)
+  # (of course, can also change the mean and sd input to rnorm, or set them as function args)
+  #
+  # set seed for reproducibility:
+  set.seed(seed)
+  m = matrix(rnorm(n = x*y,mean = int_mu , sd = int_sd), nrow = x)
+  return(m)
+}
+
+```
+
+# Model
+
+<!-- Simple split plot model -->
+$y_{ijk} = \mu + \alpha_j + \delta_{ij} + \beta_k + (\alpha \beta)_{jk} + \epsilon_{ijk}$  where,
+
+$\mu$ = overall mean  
+$\alpha_j$ = effect of the j-th level of A at whole plot
+$\delta_{ij}$ = whole plot error component
+$\beta_k$ = effect of the k-th level of B at subplot
+$(\alpha \beta)_{jk}$ = interaction effect of the j-th level of A and the k-th level of B
+$\epsilon_{ijk}$ = split-plot error component
+
+Assumptions:
+$\delta$'s are i.i.d. $N(0, \sigma_{\delta}^{2})$
+$\epsilon$'s are i.i.d. $N(0, \sigma_{\epsilon}^{2})$
+
+$\delta$ and $\epsilon$ are distributed independently of each other.
+
+
+```{r simple-split-plot}
+split.plot.sim = function(num_rep = NULL, num_A = NULL, num_B = NULL, mu = NULL, e.wp = NULL, e.sp = NULL, .seed) {
+  # Simulate data for a split plot design
+  # Args:
+  #   num_rep = number of reps of the incomplete blocks
+  #   num_A = number of levels of factor A
+  #   num_B = number of levels of factor B (subplot)
+  #   mu = overall mean
+  #   e.wp = Whole plot error standard deviation
+  #   e.sp = split-plot error standard deviation
+  #   .seed = seed for random number generation
+  # Returns:
+  #  a data frame of the simulated data
+  
+  set.seed(.seed)
+
+  # Effects due to the levels of A:
+  A.mu = rnorm(n = num_A, mean = 3, sd = 2.5) 
+
+  # Effects due to the levels of B
+  B.mu = rnorm(n = num_B, mean = 3, sd = 2.5) 
+
+  # Now generate the matrix of the A*B interaction effects:
+  AB.mu = two.way.fxn(num_A, num_B,int_mu = 1,int_sd =1.5,.seed)
+
+  # The simulated data:
+ df <-
+    # The whole-plot levels:
+    expand_grid(rep = 1:num_rep, A = 1:num_A) %>%
+    # The whole-plot estimate (effect of the j-th level of A + error):
+    mutate(wp = map_dbl(A, ~{A.mu[.x] + rnorm(n = 1, mean = 0, sd = e.wp)})) %>%
+    # Add the sub-plot factor B:
+    expand_grid(., B = 1:num_B) %>%
+    # Estimate of y (the observed response)
+    mutate(y = pmap_dbl(list(A, B, wp), function(.A, .B, .wp) {
+      mu +                                       # overall mean
+      .wp +                                      # the whole-plot estimate 
+      B.mu[.B] +                                 # effect of the k-th level of B
+      AB.mu[.A, .B] +                            # interaction effect between j-th A and k-th B
+      rnorm(n = 1, mean = 0, sd = e.sp)})) %>%   # split-plot error
+    # Don't need the wp column:
+    dplyr::select(-wp) %>%
+    # Define the factors:
+    mutate(rep = str_c("rep", rep), A = str_c("A", A), B = str_c("B", B)) %>%
+    mutate(across(rep:B, factor))
+  
+return(df)
+}
+
+# Set a "plan" for how the code should run.
+plan(multisession, workers = 5)
+
+trials = 10000
+
+df = future_map(1:trials, function(x) split.plot.sim(num_rep = sample(3:5,1), # replicates
+                                                     num_A = sample(4:7,1), # main plot
+                                                     num_B = sample(4:7,1), # subplot
+                                                     mu = rgamma(1,shape = 60.2,rate = 1),
+                                                     e.wp = 3,
+                                                     e.sp = 6, 
+                                                     .seed = x), .options = furrr_options(seed = 123))
+
+
+
+plan(sequential)
+```
+
+
+```{r Model fit B and AB}
+
+model = vector("list")
+sig.B = vector("list")
+sig.I = vector("list")
+
+
+for(i in 1:length(df)){
+  contrasts(df[[i]]$A) = contr.sum
+  contrasts(df[[i]]$B) = contr.sum
+  contrasts(df[[i]]$rep) = contr.sum
+  model[[i]] = lmerTest::lmer(y ~ A + B + A:B + (1|A:rep), df[[i]],REML =T,control=lmerControl(check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4))) # fit the model
+  sig.I[[i]] = anova(model[[i]],ddf="Kenward-Roger",type="3")[6][[1]][3]<=0.05
+  sig.B[[i]] = anova(model[[i]],ddf="Kenward-Roger",type="3")[6][[1]][2]<=0.05 & sig.I[[i]]==FALSE
+}  
+# Extract only significant trials. Of course the number of trials with significant results will vary based on the parameters used in the simulation.
+
+sum(sig.I==TRUE)/trials
+sum(sig.B==TRUE)/trials
+
+## data frames
+
+         df_I=df[unlist(sig.I)]
+         model_I=model[unlist(sig.I)]
+         pick=sample(length(df_I), 1000)
+         df_I=df_I[pick]
+         model_I=model_I[pick]
+        
+
+         df_B=df[unlist(sig.B)]
+         model_B=model[unlist(sig.B)]
+         pick=sample(length(df_B), 1000)
+         df_B=df_B[pick]
+         model_B=model_B[pick] 
+
+```
+
+```{r Calculate degrees of freedom I}
+# Interaction and level B degrees of freedom
+
+for(i in 1:length(df_I)){
+  df_I[[i]]$n.reps = nlevels(df_I[[i]]$rep) # obtain the number of reps per trial
+  df_I[[i]]$n.trt_A = nlevels(df_I[[i]]$A) 
+  df_I[[i]]$n.trt_B = nlevels(df_I[[i]]$B)
+  df_I[[i]]$degrees_freedom_sp = (df_I[[i]]$n.trt_B-1)*(df_I[[i]]$n.reps-1)*(df_I[[i]]$n.trt_A) #calculate the degrees of freedom
+}
+
+
+```
+
+# Variances for interaction B within A
+
+## Fisher LSD
+
+```{r}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_I)){
+   means[[i]]=as.data.table(cld(emmeans(model_I[[i]], pairwise~B|A)$emmeans,adjust='none',Letters=letters))
+   msd[[i]]=means[[i]][,.(get_MSD_SP(emmean,.group,A))]
+   df_I[[i]]$mse_model=as.data.table(VarCorr(model_I[[i]]),comp=c("Variance"))$vcov[2]
+   df_I[[i]]$mse_algorithm= Fisher_MSE(mean(msd[[i]]$n,na.rm=TRUE),df_I[[i]]$n.reps,0.05,df_I[[i]]$degrees_freedom_sp)
+}
+
+dt_fisher_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_I, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_I, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_fisher_sp$mse_model,dt_fisher_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_fisher_sp$mse_model,dt_fisher_sp$mse_algorithm)
+```
+
+
+## Tukey-Kramer HSD 
+
+```{r}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_I)){
+   means[[i]]=as.data.table(cld(emmeans(model_I[[i]],pairwise~B|A,adjust='tukey'),Letters=letters))
+   msd[[i]]=means[[i]][,.(get_MSD_SP(emmean,.group,A))]
+   df_I[[i]]$mse_model=as.data.table(VarCorr(model_I[[i]]),comp=c("Variance"))$vcov[2]
+   df_I[[i]]$mse_algorithm=Tukey_MSE(mean(msd[[i]]$n,na.rm=TRUE),df_I[[i]]$n.reps,0.05,df_I[[i]]$degrees_freedom_sp,df_I[[i]]$n.trt_B)
+}
+
+dt_tukey_sp=unique(data.frame(
+                          mse_model=unlist(lapply(df_I, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_I, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_tukey_sp$mse_model,dt_tukey_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_tukey_sp$mse_model,dt_tukey_sp$mse_algorithm)
+```
+
+## Bonferroni
+
+```{r}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_I)){
+   means[[i]]=as.data.table(cld(emmeans(model_I[[i]],pairwise~B|A),adjust='bonferroni',Letters=letters))
+   msd[[i]]=means[[i]][,.(get_MSD_SP(emmean,.group,A))]
+   df_I[[i]]$mse_algorithm=Bonferroni_MSE(mean(msd[[i]]$n,na.rm=TRUE),df_I[[i]]$n.reps,0.05,df_I[[i]]$degrees_freedom_sp,df_I[[i]]$n.trt_B)
+}
+
+dt_bon_sp=unique(data.frame(
+                          mse_model=unlist(lapply(df_I, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_I, `[`, 10),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_bon_sp$mse_model,dt_bon_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_bon_sp$mse_model,dt_bon_sp$mse_algorithm)
+
+```
+
+## Dunn-Sidak 
+
+```{r}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_I)){
+   means[[i]]=as.data.table(cld(emmeans(model_I[[i]],pairwise~B|A),adjust='sidak',Letters=letters))
+   msd[[i]]=means[[i]][,.(get_MSD_SP(emmean,.group,A))]
+   df_I[[i]]$mse_algorithm= Sidak_MSE(mean(msd[[i]]$n,na.rm=TRUE),df_I[[i]]$n.reps,0.05,df_I[[i]]$degrees_freedom_sp,df_I[[i]]$n.trt_B)
+}
+
+dt_sid_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_I, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_I, `[`, 10),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_sid_sp$mse_model,dt_sid_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_sid_sp$mse_model,dt_sid_sp$mse_algorithm)
+
+```
+
+
+## Scheffe
+
+```{r}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_I)){
+   means[[i]]=as.data.table(cld(emmeans(model_I[[i]],pairwise~B|A),adjust='scheffe',Letters=letters))
+   msd[[i]]=means[[i]][,.(get_MSD_SP(emmean,.group,A))]
+   df_I[[i]]$mse_algorithm=Scheffe_MSE(mean(msd[[i]]$n,na.rm=TRUE),df_I[[i]]$n.reps,0.05,df_I[[i]]$degrees_freedom_sp,df_I[[i]]$n.trt_B)
+}
+
+
+dt_sch_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_I, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_I, `[`, 10),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_sch_sp$mse_model,dt_sch_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_sch_sp$mse_model,dt_sch_sp$mse_algorithm)
+
+```
+
+
+```{r}
+
+dt_bon_sp$method="Bonferroni"
+dt_sid_sp$method="Sidak"
+dt_tukey_sp$method="Tukey"
+dt_fisher_sp$method="Fisher"
+dt_sch_sp$method="Scheffe"
+
+
+dt=rbind(dt_bon_sp,dt_fisher_sp,dt_sch_sp,dt_sid_sp,dt_tukey_sp)
+dt$design="sp_crd_ab"
+save(dt, file = "sp_crd_ab.RData")
+
+```
+
+```{r}
+
+dt %>% 
+  ggplot(aes(x=mse_model,y=mse_algorithm))+
+  geom_point(alpha=0.1,size=0.8) +
+  labs(x="Actual MSE",y="MSE FindR estimate")+
+  geom_abline(intercept = 0, slope = 1, size = 0.3,linetype = "dashed") +
+  geom_smooth(method='lm', formula= y~x, se = FALSE)+
+  facet_wrap(~method)+
+  theme_bw() +
+  coord_fixed(ratio = 1)+
+  theme(strip.text.y = element_text(size = 4),
+        strip.text.x = element_text(size = 4),
+        axis.text=element_text(size=5))
+
+```
+
+```{r}
+rm(dt_bon_sp)
+rm(dt_sid_sp)
+rm(dt_tukey_sp)
+rm(dt_fisher_sp)
+rm(dt_sch_sp)
+rm(dt)
+
+```
+
+
+# Variances for B 
+
+```{r Calculate degrees of freedom B}
+# Interaction and level B degrees of freedom
+
+for(i in 1:length(df_B)){
+  df_B[[i]]$n.reps = nlevels(df_B[[i]]$rep) # obtain the number of reps per trial
+  df_B[[i]]$n.trt_A = nlevels(df_B[[i]]$A) 
+  df_B[[i]]$n.trt_B = nlevels(df_B[[i]]$B)
+  df_B[[i]]$degrees_freedom_sp = (df_B[[i]]$n.trt_B-1)*(df_B[[i]]$n.reps-1)*(df_B[[i]]$n.trt_A) #calculate the degrees of freedom
+}
+
+
+```
+
+
+## Fisher LSD
+
+```{r,warning=FALSE,message=FALSE}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_B)){
+  means[[i]]=as.data.table(cld(emmeans(model_B[[i]], pairwise~B),adjust='none',Letters=letters))
+  msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+  df_B[[i]]$mse_model=as.data.table(VarCorr(model_B[[i]]),comp=c("Variance"))$vcov[2]
+  df_B[[i]]$mse_algorithm= Fisher_MSE_ab(mean(msd[[i]]$n,na.rm=TRUE),df_B[[i]]$n.reps,0.05,df_B[[i]]$degrees_freedom_sp,df_B[[i]]$n.trt_A)
+}
+
+dt_fisher_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_B, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_B, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_fisher_sp$mse_model,dt_fisher_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_fisher_sp$mse_model,dt_fisher_sp$mse_algorithm)
+```
+
+## Tukey-Kramer HSD 
+
+```{r,warning=FALSE,message=FALSE}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_B)){
+  means[[i]]=as.data.table(cld(emmeans(model_B[[i]],pairwise~B,adjust='tukey'),Letters=letters))
+  msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+  df_B[[i]]$mse_model=as.data.table(VarCorr(model_B[[i]]),comp=c("Variance"))$vcov[2]
+  df_B[[i]]$mse_algorithm=Tukey_MSE_ab(mean(msd[[i]]$n),df_B[[i]]$n.reps,0.05,df_B[[i]]$degrees_freedom_sp,df_B[[i]]$n.trt_B,df_B[[i]]$n.trt_A)
+}
+
+
+dt_tukey_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_B, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_B, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_tukey_sp$mse_model,dt_tukey_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_tukey_sp$mse_model,dt_tukey_sp$mse_algorithm)
+```
+
+## Bonferroni
+
+```{r,warning=FALSE,message=FALSE}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_B)){
+  means[[i]]=as.data.table(cld(emmeans(model_B[[i]],pairwise~B),adjust='bonferroni',Letters=letters))
+  msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+  df_B[[i]]$mse_model=as.data.table(VarCorr(model_B[[i]]),comp=c("Variance"))$vcov[2]
+  df_B[[i]]$mse_algorithm=Bonferroni_MSE_ab(mean(msd[[i]]$n,na.rm=TRUE),df_B[[i]]$n.reps,0.05,df_B[[i]]$degrees_freedom_sp,df_B[[i]]$n.trt_B,df_B[[i]]$n.trt_A)
+}
+
+
+dt_bon_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_B, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_B, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_bon_sp$mse_model,dt_bon_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_bon_sp$mse_model,dt_bon_sp$mse_algorithm)
+```
+
+## Dunn-Sidak 
+
+```{r,warning=FALSE,message=FALSE}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_B)){
+  means[[i]]=as.data.table(cld(emmeans(model_B[[i]],pairwise~B),adjust='sidak',Letters=letters))
+  msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+  df_B[[i]]$mse_model=as.data.table(VarCorr(model_B[[i]]),comp=c("Variance"))$vcov[2]
+  df_B[[i]]$mse_algorithm=Sidak_MSE_ab(mean(msd[[i]]$n,na.rm=TRUE),df_B[[i]]$n.reps,0.05,df_B[[i]]$degrees_freedom_sp,df_B[[i]]$n.trt_B,df_B[[i]]$n.trt_A)
+}
+
+
+dt_sid_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_B, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_B, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_sid_sp$mse_model,dt_sid_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_sid_sp$mse_model,dt_sid_sp$mse_algorithm)
+```
+
+
+## Scheffe
+
+```{r,warning=FALSE,message=FALSE}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_B)){
+  means[[i]]=as.data.table(cld(emmeans(model_B[[i]],pairwise~B),adjust='scheffe',Letters=letters))
+  msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+  df_B[[i]]$mse_model=as.data.table(VarCorr(model_B[[i]]),comp=c("Variance"))$vcov[2]
+  df_B[[i]]$mse_algorithm= Scheffe_MSE_ab(mean(msd[[i]]$n,na.rm=TRUE),df_B[[i]]$n.reps,0.05,df_B[[i]]$degrees_freedom_sp,df_B[[i]]$n.trt_B,df_B[[i]]$n.trt_A)
+}
+
+
+
+dt_sch_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_B, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_B, `[`, 10),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_sch_sp$mse_model,dt_sch_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_sch_sp$mse_model,dt_sch_sp$mse_algorithm)
+```
+
+
+```{r}
+
+dt_bon_sp$method="Bonferroni"
+dt_sid_sp$method="Sidak"
+dt_tukey_sp$method="Tukey"
+dt_fisher_sp$method="Fisher"
+dt_sch_sp$method="Scheffe"
+
+
+dt=rbind(dt_bon_sp,dt_fisher_sp,dt_sch_sp,dt_sid_sp,dt_tukey_sp)
+dt$design="sp_crd_b"
+save(dt, file = "sp_crd_b.RData")
+
+```
+
+```{r}
+
+dt %>% 
+  ggplot(aes(x=mse_model,y=mse_algorithm))+
+  geom_point(alpha=0.1,size=0.8) +
+  labs(x="Actual MSE",y="MSE FindR estimate")+
+  geom_abline(intercept = 0, slope = 1, size = 0.3,linetype = "dashed") +
+  geom_smooth(method='lm', formula= y~x, se = FALSE)+
+  facet_wrap(~method)+
+  theme_bw() +
+  coord_fixed(ratio = 1)+
+  theme(strip.text.y = element_text(size = 4),
+        strip.text.x = element_text(size = 4),
+        axis.text=element_text(size=5))
+
+```
+
+
+
+```{r}
+rm(dt_bon_sp)
+rm(dt_sid_sp)
+rm(dt_tukey_sp)
+rm(dt_fisher_sp)
+rm(dt_sch_sp)
+rm(dt)
+
+```
+
+
+# Variances for A
+
+```{r Model fit A}
+
+sig.A = vector("list")
+
+for(i in 1:length(df)){
+  sig.A[[i]] = anova(model[[i]],ddf="Kenward-Roger",type="3")[6][[1]][2]<=0.05 & sig.I[[i]]==FALSE
+}  
+# Extract only significant trials. Of course the number of trials with significant results will vary based on the parameters used in the simulation.
+
+sum(sig.A==TRUE)/trials
+
+
+## data frames
+
+         df_A=df[unlist(sig.A)]
+         model_A=model[unlist(sig.A)]
+         pick=sample(length(df_A),1000)
+         df_A=df_A[pick]
+         model_A=model_A[pick] 
+
+```
+
+
+```{r Calculate degrees of freedom A}
+# IA degrees of freedom
+
+for(i in 1:length(df_A)){
+  df_A[[i]]$n.reps = nlevels(df_A[[i]]$rep) # obtain the number of reps per trial
+  df_A[[i]]$n.trt_A = nlevels(df_A[[i]]$A) 
+  df_A[[i]]$n.trt_B = nlevels(df_A[[i]]$B)
+  df_A[[i]]$degrees_freedom_wp = (df_A[[i]]$n.reps-1)*(df_A[[i]]$n.trt_A) #calculate the degrees of freedom
+}
+
+
+```
+
+## Fisher LSD
+
+```{r,warning=FALSE,message=FALSE}
+means=vector("list")
+msd=vector("list")
+var_sp=vector("list")
+
+for(i in 1:length(df_A)){
+  means[[i]]=as.data.table(cld(emmeans(model_A[[i]], pairwise~A),adjust='none',Letters=letters))
+  msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+  var_sp[[i]]=as.data.table(VarCorr(model_A[[i]]),comp=c("Variance"))
+  df_A[[i]]$mse_model=var_sp[[i]][, .(mse_model=vcov[1]*df_A[[i]]$n.trt_B+vcov[2])]
+  df_A[[i]]$mse_algorithm= Fisher_MSE_ab(mean(msd[[i]]$n,na.rm=TRUE),df_A[[i]]$n.reps,0.05,df_A[[i]]$degrees_freedom_wp,df_A[[i]]$n.trt_B)
+}
+
+
+dt_fisher_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_A, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_A, `[`, 10),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_fisher_sp$mse_model,dt_fisher_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_fisher_sp$mse_model,dt_fisher_sp$mse_algorithm)
+
+
+
+```
+
+
+## Tukey-Kramer HSD 
+
+```{r,warning=FALSE,message=FALSE}
+means=vector("list")
+msd=vector("list")
+var_sp=vector("list")
+
+for(i in 1:length(df_A)){
+  means[[i]]=as.data.table(cld(emmeans(model_A[[i]],pairwise~A,adjust='tukey'),Letters=letters))
+  msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+  var_sp[[i]]=as.data.table(VarCorr(model_A[[i]]),comp=c("Variance"))
+   df_A[[i]]$mse_algorithm=Tukey_MSE_ab(mean(msd[[i]]$n,na.rm=TRUE),df_A[[i]]$n.reps,0.05,df_A[[i]]$degrees_freedom_wp,df_A[[i]]$n.trt_A,df_A[[i]]$n.trt_B)
+}
+
+
+dt_tukey_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_A, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_A, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_tukey_sp$mse_model,dt_tukey_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_tukey_sp$mse_model,dt_tukey_sp$mse_algorithm)
+```
+
+
+## Bonferroni
+
+```{r,warning=FALSE,message=FALSE}
+means=vector("list")
+msd=vector("list")
+var_sp=vector("list")
+
+
+for(i in 1:length(df_A)){
+  means[[i]]=as.data.table(cld(emmeans(model_A[[i]], pairwise~A),adjust='bonferroni',Letters=letters))
+  msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+  var_sp[[i]]=as.data.table(VarCorr(model_A[[i]]),comp=c("Variance"))
+  df_A[[i]]$mse_algorithm= Bonferroni_MSE_ab(mean(msd[[i]]$n,na.rm=TRUE),df_A[[i]]$n.reps,0.05,df_A[[i]]$degrees_freedom_wp,df_A[[i]]$n.trt_A,df_A[[i]]$n.trt_B)
+}
+
+dt_bon_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_A, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_A, `[`, 10),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_bon_sp$mse_model,dt_bon_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_bon_sp$mse_model,dt_bon_sp$mse_algorithm)
+
+```
+
+## Dunn-Sidak
+
+```{r,warning=FALSE,message=FALSE}
+means=vector("list")
+msd=vector("list")
+var_sp=vector("list")
+
+
+for(i in 1:length(df_A)){
+  means[[i]]=as.data.table(cld(emmeans(model_A[[i]], pairwise~A),adjust='sidak',Letters=letters))
+  msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+  var_sp[[i]]=as.data.table(VarCorr(model_A[[i]]),comp=c("Variance"))
+  df_A[[i]]$mse_algorithm=Sidak_MSE_ab(mean(msd[[i]]$n,na.rm=TRUE),df_A[[i]]$n.reps,0.05,df_A[[i]]$degrees_freedom_wp,df_A[[i]]$n.trt_A,df_A[[i]]$n.trt_B)
+}
+
+dt_sid_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_A, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_A, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_sid_sp$mse_model,dt_sid_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_sid_sp$mse_model,dt_sid_sp$mse_algorithm)
+```
+
+## Scheffe
+
+```{r,warning=FALSE,message=FALSE}
+means=vector("list")
+msd=vector("list")
+var_sp=vector("list")
+
+
+for(i in 1:length(df_A)){
+  means[[i]]=as.data.table(cld(emmeans(model_A[[i]], pairwise~A),adjust='scheffe',Letters=letters))
+  msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+  var_sp[[i]]=as.data.table(VarCorr(model_A[[i]]),comp=c("Variance"))
+  df_A[[i]]$mse_algorithm=Scheffe_MSE_ab(mean(msd[[i]]$n,na.rm=TRUE),df_A[[i]]$n.reps,0.05,df_A[[i]]$degrees_freedom_wp,df_A[[i]]$n.trt_A,df_A[[i]]$n.trt_B)
+}
+
+dt_sch_sp= unique(data.frame(
+                          mse_model=unlist(lapply(df_A, `[`, 9),use.names = F),
+                          mse_algorithm=unlist(lapply(df_A, `[`, 10),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_sch_sp$mse_model,dt_sch_sp$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_sch_sp$mse_model,dt_sch_sp$mse_algorithm)
+```
+
+
+```{r}
+
+dt_bon_sp$method="Bonferroni"
+dt_sid_sp$method="Sidak"
+dt_tukey_sp$method="Tukey"
+dt_fisher_sp$method="Fisher"
+dt_sch_sp$method="Scheffe"
+
+dt=rbind(dt_bon_sp,dt_fisher_sp,dt_sch_sp,dt_sid_sp,dt_tukey_sp)
+dt$design="sp_crd_a"
+save(dt, file = "sp_crd_a.RData")
+
+```
+
+```{r}
+
+dt %>% 
+  ggplot(aes(x=mse_model,y=mse_algorithm))+
+  geom_point(alpha=0.1,size=0.8) +
+  labs(x="Actual MSE",y="MSE FindR estimate")+
+  geom_abline(intercept = 0, slope = 1, size = 0.3,linetype = "dashed") +
+  geom_smooth(method='lm', formula= y~x, se = FALSE)+
+  facet_wrap(~method)+
+  theme_bw() +
+  coord_fixed(ratio = 1)+
+  theme(strip.text.y = element_text(size = 4),
+        strip.text.x = element_text(size = 4),
+        axis.text=element_text(size=5))
+
+```
+
+```{r Session info}
+sessionInfo()
+```

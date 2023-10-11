@@ -1,0 +1,341 @@
+---
+title: "Simulations for Randomized Complete Block Design"
+author: "Vinicius C. Garnica and Denis A. Shah"
+date: "2/7/2023"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=1, digits=2)
+```
+
+
+```{r Library,warning=FALSE,message=FALSE}
+library(tidyverse)
+library(multcomp)
+library(agricolae)
+library(emmeans)
+library(lme4)
+library(furrr) 
+library(data.table)
+library(DescTools)
+
+theme_set(theme_bw())
+```
+
+
+```{r Algorithm and Post hoc test formulas}
+{
+get_MSD=function(value,letter){
+  require(data.table)
+  letter=letter[order(value,decreasing = T)]
+  value=value[order(value,decreasing = T)]
+  n=abs(apply(combn(value,2), 2, diff))
+  l=combn(letter,2)
+  dt=as.data.table(t(rbind(n,l)))
+  dt$n=as.numeric(dt$n)
+  dt$range=sequence((length(value)-1):1)+1
+  dt=dt[order(dt$n),]
+  dt$inter = !sapply(gsub(" ", "", paste(dt$V2, dt$V3)), function(x) any(str_count(x, letters)>1))
+  dt[dt==""]=NA
+  dt=na.omit(dt)
+  if(all(dt$V2==dt$V3) || length(rle(dt$inter)$lengths)==1){
+    data=as.data.table(rbind(rep(NA,ncol(dt)),rep(NA,ncol(dt))))
+    colnames(data) = colnames(dt)
+    return(data)}
+  else{
+    msd_1=dt[inter==FALSE, .SD[which.max(n)], by=inter] 
+    msd_2=dt[inter==TRUE, .SD[which.min(n)], by=inter]
+    msd=rbind(msd_1,msd_2)}
+  return(msd) 
+}
+  
+
+Fisher_MSE= function(msd,rep,alpha,df){
+  mse=0.5*unique(rep)*(msd/qt(1-unique(alpha)/2,unique(df)))^2
+  return(mse)}
+Tukey_MSE= function(msd,rep,alpha,df,n_factor){
+  mse=unique(rep)*(msd/qtukey(1-unique(alpha),unique(n_factor),unique(df)))^2
+  return(mse)
+}
+Bonferroni_MSE= function(msd,rep,alpha,df,n_factor){
+  k=choose(unique(n_factor),2)
+  mse=0.5*unique(rep)*(msd/qt(1-((unique(alpha)/2)/k),unique(df)))^2
+  return(mse)
+}
+Sidak_MSE= function(msd,rep,alpha,df,n_factor){
+  k=choose(unique(n_factor),2)
+  mse=0.5*unique(rep)*(msd/qt(1-(1-(unique(alpha))/2)^(1/k),unique(df)))^2
+  return(mse)
+}
+Scheffe_MSE= function(msd,rep,alpha,df,n_factor){
+  mse=(unique(rep)*msd^2)/(2*(unique(n_factor)-1)*qf(1-unique(alpha),unique(n_factor)-1,unique(df)))
+  return(mse)
+}
+}
+```
+
+# Model
+
+<!-- The model for a randomized complete block design -->
+$y_{ij} = \mu + \tau_i + \rho_j + \epsilon_{ij}$
+
+
+
+```{r RCBD}
+rcbd.sim = function(num_trt = NULL, num_blk = NULL, mu = NULL, e.sd = NULL, .seed) {
+  # Simulate data for a RCBD
+  # Args:
+  #   num_trt = number of levels of factor A
+  #   num_blk = number of blocks
+  #   mu = overall mean
+  #   e.sd = residual error standard deviation. Errors ~Norm(0, e.sd^2).  1.5^2 = 2.25
+  #   .seed = seed for random number generation
+  # Returns:
+  #  a data frame of the simulated data
+  
+  set.seed(.seed)
+  
+  
+  
+  # Effects due to the levels of A
+  A.mu = rnorm(n = num_trt, mean = 3, sd =2.5) 
+  # Effects due to the blocks
+  B.mu = rnorm(n = num_blk, mean = 1, sd = 0.2) 
+
+  # The simulated data:
+  df =
+    expand_grid(B = 1:num_blk, A = 1:num_trt) %>%
+    mutate(y = map2_dbl(A, B, ~{mu + A.mu[.x] + B.mu[.y] + rnorm(n = 1, mean = 0, sd = e.sd)})) %>%
+    # fewer mistakes will occur if we use words to encode the levels of a factor:
+    mutate(A = str_c("A", A), B = str_c("B", B)) %>%
+    mutate(across(A:B, factor))
+  
+  return(df)
+}
+
+
+# We would like to run the function, say 10,000 times, to generate 10,000 simulated data sets.
+# We can do this in parallel. We will map over the function one.way.sim, and use future_map to parallelize the mapping.
+
+# Set a "plan" for how the code should run.
+plan(multisession, workers = 5)  # I have 6 cores, so will use 5.
+
+# 10,000 simulated trials
+
+trials = 10000
+
+df = future_map(1:trials, function(x) rcbd.sim(num_blk =sample(3:5,1), # number of replicates varying from 3 to 5 per trial
+                                               num_trt = sample(4:20,1), # number of treatments varying from 4 to 16 per trial
+                                               mu = rgamma(1,shape = 60.2,rate = 1), # trial average varying as a gamma function
+                                               e.sd = 7, # residual error
+                                               .seed = x), .options = furrr_options(seed = 123))
+
+plan(sequential)
+```
+
+
+```{r Model fit}
+model = vector("list")
+sig.A = vector("list")
+
+for(i in 1:length(df)){
+  contrasts(df[[i]]$A) <- contr.sum
+  contrasts(df[[i]]$B) <- contr.sum
+  model[[i]] = aov(y ~ B + A, data = df[[i]]) # fit the model
+  sig.A[[i]]=summary(model[[i]])[1][[1]][[5]][[2]]<=0.05 # select only trials P-value<0.05
+}
+
+
+# Extract only significant trials
+
+df_A=df[unlist(sig.A)]
+model_A=model[unlist(sig.A)]
+pick=sample(length(df_A),1000) # select a sample of 1000 trials with significant results
+df_A=df_A[pick]
+model_A=model_A[pick]
+
+sum(sig.A==TRUE)/trials
+```
+
+```{r Calculate degrees of freedom}
+for(i in 1:length(df_A)){
+  df_A[[i]]$n.block = nlevels(df_A[[i]]$B) # obtain the number of reps per trial
+  df_A[[i]]$n.trt = nlevels(df_A[[i]]$A) # obtain the number of reps per trial
+  df_A[[i]]$degrees_freedom = (df_A[[i]]$n.block-1)*(df_A[[i]]$n.trt-1) # calculate the degrees of freedom
+}
+```
+
+
+## Fisher LSD
+
+```{r,fig.height=3,fig.width=3}
+LSD=vector("list")
+lsd_group=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_A)){
+   LSD[[i]]=LSD.test(model_A[[i]], "A", group=TRUE)
+   lsd_group[[i]]=LSD[[i]]$groups
+   df_A[[i]]$mse_model=LSD[[i]]$statistics$MSerror
+   msd[[i]]=get_MSD(lsd_group[[i]]$y,lsd_group[[i]]$groups)
+   df_A[[i]]$mse_algorithm= Fisher_MSE(mean(msd[[i]]$n),df_A[[i]]$n.block,0.05,df_A[[i]]$degrees_freedom)
+}
+
+dt_fisher_rcbd=unique(data.frame(
+           mse_model=unlist(lapply(df_A, `[`, 7),use.names = F),
+           mse_algorithm=unlist(lapply(df_A, `[`, 8),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_fisher_rcbd$mse_model,dt_fisher_rcbd$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_fisher_rcbd$mse_model,dt_fisher_rcbd$mse_algorithm)
+```
+
+## Tukey-Kramer HSD 
+
+```{r,fig.height=3,fig.width=3}
+HSD=vector("list")
+hsd_group=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_A)){
+   HSD[[i]]=HSD.test(model_A[[i]], "A", group=TRUE)
+   hsd_group[[i]]=HSD[[i]]$groups
+   df_A[[i]]$mse_model=HSD[[i]]$statistics$MSerror
+   msd[[i]]=get_MSD(hsd_group[[i]]$y,hsd_group[[i]]$groups)
+   df_A[[i]]$mse_algorithm= Tukey_MSE(mean(msd[[i]]$n),df_A[[i]]$n.block,0.05,df_A[[i]]$degrees_freedom,n_factor = df_A[[i]]$n.trt)
+}
+
+dt_tukey_rcbd=unique(data.frame(
+           mse_model=unlist(lapply(df_A, `[`, 7),use.names = F),
+           mse_algorithm=unlist(lapply(df_A, `[`, 8),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_tukey_rcbd$mse_model,dt_tukey_rcbd$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_tukey_rcbd$mse_model,dt_tukey_rcbd$mse_algorithm)
+```
+
+
+## Bonferroni
+
+```{r,fig.height=3,fig.width=3}
+means=vector("list")
+msd=vector("list")
+
+
+for(i in 1:length(df_A)){
+   means[[i]]=as.data.table(cld(emmeans(model_A[[i]], pairwise~A),adjust='bonferroni',Letters=letters)) 
+   msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+   df_A[[i]]$mse_algorithm= Bonferroni_MSE(mean(msd[[i]]$n),df_A[[i]]$n.block,0.05,df_A[[i]]$degrees_freedom,df_A[[i]]$n.trt)
+}
+
+
+dt_bon_rcbd= unique(data.frame(
+           mse_model=unlist(lapply(df_A, `[`, 7),use.names = F),
+           mse_algorithm=unlist(lapply(df_A, `[`, 8),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_bon_rcbd$mse_model,dt_bon_rcbd$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_bon_rcbd$mse_model,dt_bon_rcbd$mse_algorithm)
+```
+
+## Dunn-Sidak 
+
+```{r,fig.height=3,fig.width=3}
+means=vector("list")
+msd=vector("list")
+
+
+for(i in 1:length(df_A)){
+   means[[i]]=as.data.table(cld(emmeans(model_A[[i]], pairwise~A),adjust='sidak',Letters=letters))
+   msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+   df_A[[i]]$mse_algorithm= Sidak_MSE(mean(msd[[i]]$n),df_A[[i]]$n.block,0.05,df_A[[i]]$degrees_freedom,df_A[[i]]$n.trt)
+}
+
+dt_sid_rcbd= unique(data.frame(
+           mse_model=unlist(lapply(df_A, `[`, 7),use.names = F),
+           mse_algorithm=unlist(lapply(df_A, `[`, 8),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_sid_rcbd$mse_model,dt_sid_rcbd$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_sid_rcbd$mse_model,dt_sid_rcbd$mse_algorithm)
+```
+
+## Scheffe
+
+```{r,fig.height=3,fig.width=3}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_A)){
+   means[[i]]=as.data.table(cld(emmeans(model_A[[i]], pairwise~A),adjust='scheffe',Letters=letters))
+   msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+   df_A[[i]]$mse_algorithm= Scheffe_MSE(mean(msd[[i]]$n),df_A[[i]]$n.block,0.05,df_A[[i]]$degrees_freedom,df_A[[i]]$n.trt)
+}
+
+dt_sch_rcbd=unique(data.frame(
+           mse_model=unlist(lapply(df_A, `[`, 7),use.names = F),
+           mse_algorithm=unlist(lapply(df_A, `[`, 8),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_sch_rcbd$mse_model,dt_sch_rcbd$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_sch_rcbd$mse_model,dt_sch_rcbd$mse_algorithm)
+```
+
+
+```{r}
+dt_bon_rcbd$method="Bonferroni"
+dt_sid_rcbd$method="Sidak"
+dt_tukey_rcbd$method="Tukey"
+dt_fisher_rcbd$method="Fisher"
+dt_sch_rcbd$method="Scheffe"
+
+
+dt=rbind(dt_bon_rcbd,dt_fisher_rcbd,dt_sch_rcbd,dt_sid_rcbd,dt_tukey_rcbd)
+dt$design="rcbd"
+save(dt, file = "rcbd.RData")
+```
+
+```{r}
+
+dt %>% 
+  ggplot(aes(x=mse_model,y=mse_algorithm))+
+  geom_point(alpha=0.1,size=0.8) +
+  labs(x="Actual MSE",y="MSE FindR estimate")+
+  geom_abline(intercept = 0, slope = 1, size = 0.3,linetype = "dashed") +
+  geom_smooth(method='lm', formula= y~x, se = FALSE)+
+  facet_wrap(~method)+
+  theme_bw() +
+  coord_fixed(ratio = 1)+
+  theme(strip.text.y = element_text(size = 4),
+        strip.text.x = element_text(size = 4),
+        axis.text=element_text(size=5))
+
+```
+
+
+```{r Session info}
+sessionInfo()
+```

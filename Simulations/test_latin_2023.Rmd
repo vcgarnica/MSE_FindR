@@ -1,0 +1,357 @@
+---
+title: "Simulations for Latin Square Design"
+author: "Vinicius C. Garnica and Denis A. Shah"
+date: "2/7/2023"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=1, digits=2)
+```
+
+```{r Library,warning=FALSE,message=FALSE}
+library(tidyverse)
+library(multcomp)
+library(agricolae)
+library(emmeans)
+library(lme4)
+library(furrr) 
+library(data.table)
+library(DescTools)
+
+theme_set(theme_bw())
+```
+
+
+
+```{r Algorithm and Post hoc test formulas}
+{
+get_MSD=function(value,letter){
+  require(data.table)
+  letter=letter[order(value,decreasing = T)]
+  value=value[order(value,decreasing = T)]
+  n=abs(apply(combn(value,2), 2, diff))
+  l=combn(letter,2)
+  dt=as.data.table(t(rbind(n,l)))
+  dt$n=as.numeric(dt$n)
+  dt$range=sequence((length(value)-1):1)+1
+  dt=dt[order(dt$n),]
+  dt$inter = !sapply(gsub(" ", "", paste(dt$V2, dt$V3)), function(x) any(str_count(x, letters)>1))
+  dt[dt==""]=NA
+  dt=na.omit(dt)
+  if(all(dt$V2==dt$V3) || length(rle(dt$inter)$lengths)==1){
+    data=as.data.table(rbind(rep(NA,ncol(dt)),rep(NA,ncol(dt))))
+    colnames(data) = colnames(dt)
+    return(data)}
+  else{
+    msd_1=dt[inter==FALSE, .SD[which.max(n)], by=inter] 
+    msd_2=dt[inter==TRUE, .SD[which.min(n)], by=inter]
+    msd=rbind(msd_1,msd_2)}
+  return(msd) 
+}
+
+Fisher_MSE= function(msd,rep,alpha,df){
+  mse=0.5*unique(rep)*(msd/qt(1-unique(alpha)/2,unique(df)))^2
+  return(mse)}
+Tukey_MSE= function(msd,rep,alpha,df,n_factor){
+  mse=unique(rep)*(msd/qtukey(1-unique(alpha),unique(n_factor),unique(df)))^2
+  return(mse)
+}
+Bonferroni_MSE= function(msd,rep,alpha,df,n_factor){
+  k=choose(unique(n_factor),2)
+  mse=0.5*unique(rep)*(msd/qt(1-((unique(alpha)/2)/k),unique(df)))^2
+  return(mse)
+}
+Sidak_MSE= function(msd,rep,alpha,df,n_factor){
+  k=choose(unique(n_factor),2)
+  mse=0.5*unique(rep)*(msd/qt(1-(1-(unique(alpha))/2)^(1/k),unique(df)))^2
+  return(mse)
+}
+Scheffe_MSE= function(msd,rep,alpha,df,n_factor){
+  mse=(unique(rep)*msd^2)/(2*(unique(n_factor)-1)*qf(1-unique(alpha),unique(n_factor)-1,unique(df)))
+  return(mse)
+}
+
+}
+```
+
+
+# Model
+
+<!-- Basic Latin square design -->
+$y_{ijk} = \mu + \rho_i + \gamma_j + \tau_k + \epsilon_{ijk}$  where
+
+$\mu$ = overall mean
+$\rho_i$ = effect due to the i-th row
+$\gamma_j$ = effect due to the j-th column
+$\tau_k$ = effect due to the k-th treatment
+$\epsilon_{ijk}$ = residual for the (i,j,k)-th observation
+
+Assumptions:
+$\epsilon$ are i.i.d. $N(0, \sigma^2_\epsilon$
+
+
+```{r basic-Latin-Square}
+latin.square.sim = function(num_trt = NULL, mu = NULL, e.sd = NULL, .seed) {
+  # Simulate data for a split-split-plot design 
+  # Args:
+  #   num_trt = number of levels for the treatment
+  #   mu = overall mean
+  #   e.sd = standard deviation of the residuals
+  #   .seed = seed for random number generation
+  # Returns:
+  #  a data frame of the simulated data
+
+  set.seed(.seed)
+  # Effect due to the i-th row
+  row.mu = rnorm(n = num_trt, mean = 1, sd = 0.2)  
+  # Effect due to the j-th column:
+  col.mu = rnorm(n = num_trt, mean = 1, sd = 0.2)  
+  # Effect due to the k-th treatment:
+  A.mu = rnorm(n = num_trt, mean = 3, sd = 2.5)
+  
+  # The simulated data.
+  # Because randomization has to be done in both the row and column directions, with the constraint that each treatment EU appears only once per row and per column, I will use the design.lsd function from the agricolae package to get started...
+  df =
+    agricolae::design.lsd(1:num_trt, serie = 2, seed =.seed)$book %>%
+    # change the default name agricolae assigned to the trt column:
+    rename("trt" = "1:num_trt") %>%
+    dplyr::select(row, col, trt) %>%
+    # convert columns to numeric (needed for indexing in the data generation):
+    mutate(across(.cols = everything(), .fns = as.numeric)) %>%
+    mutate(y = pmap_dbl(list(row, col, trt), function(.row, .col, .trt) {
+      mu +                                # overall mean
+      row.mu[.row] +                      # effect due to the i-th row
+      col.mu[.col] +                      # effect due to the j-th column
+      A.mu[.trt] +                        # effect of the k-th treatment
+      rnorm(n = 1, mean = 0, sd = e.sd)  # residuals
+    })) 
+  
+  res = df %>%
+    # row, col and trt as factors:
+    mutate(across(row:trt, as.factor)) %>%
+    # fewer mistakes will occur if we use words to encode the levels of a factor:
+    rename(R = row, C =  col, A = trt)
+
+  return(res)
+}
+
+# Set a "plan" for how the code should run.
+plan(multisession, workers = 5)
+
+trials=10000
+
+df = future_map(1:trials, function(x) latin.square.sim(num_trt = sample(4:8,1),
+                                                    mu = rgamma(1,shape = 60.2,rate = 1), # trial average varying as a gamma function
+                                                    e.sd = 7,
+                                                    .seed = x), .options = furrr_options(seed = 123))
+
+plan(sequential)
+```
+
+```{r Model fit}
+
+model = vector("list")
+sig.A = vector("list")
+
+for(i in 1:length(df)){
+  contrasts(df[[i]]$R) <- contr.sum
+  contrasts(df[[i]]$C) <- contr.sum
+  contrasts(df[[i]]$A) <- contr.sum
+  model[[i]] =aov(y ~ R + C + A,df[[i]]) # fit the model
+  sig.A[[i]]=summary(model[[i]])[1][[1]][[5]][[3]]<=0.05 # select only trials P-value<0.05
+}
+
+# Extract only significant trials. Of course the number of trials with significant results will vary based on the parameters used in the simulation.
+
+df_A=df[unlist(sig.A)]
+model_A=model[unlist(sig.A)]
+pick=sample(length(df_A), 1000) # select a sample of 1000 trials with significant results
+df_A=df_A[pick]
+model_A=model_A[pick]
+
+sum(sig.A==TRUE)/trials
+```
+
+```{r Calculate degrees of freedom}
+
+for(i in 1:length(df_A)){
+  df_A[[i]]$n.rows = nlevels(df_A[[i]]$R) # obtain the number of reps per trial
+  df_A[[i]]$n.cols = nlevels(df_A[[i]]$C) # obtain the number of columns per trial
+  df_A[[i]]$n.trt = nlevels(df_A[[i]]$A) # obtain the number of trt per trial
+  df_A[[i]]$degrees_freedom = (df_A[[i]]$n.trt-1)*(df_A[[i]]$n.trt-2) # calculate the degrees of freedom
+}
+
+```
+
+
+
+## Fisher LSD
+```{r,fig.height=3,fig.width=3}
+LSD=vector("list")
+lsd_group=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_A)){
+   LSD[[i]]=LSD.test(model_A[[i]], "A", group=TRUE)
+   lsd_group[[i]]=LSD[[i]]$groups
+   df_A[[i]]$mse_model=LSD[[i]]$statistics$MSerror
+   msd[[i]]=get_MSD(lsd_group[[i]]$y,lsd_group[[i]]$groups)
+   df_A[[i]]$mse_algorithm= Fisher_MSE(mean(msd[[i]]$n),df_A[[i]]$n.rows,0.05,df_A[[i]]$degrees_freedom)
+}
+
+
+dt_fisher_latin= unique(data.frame(mse_model=unlist(lapply(df_A, `[`, 9),use.names = F),
+           mse_algorithm=unlist(lapply(df_A, `[`, 10),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_fisher_latin$mse_model,dt_fisher_latin$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_fisher_latin$mse_model,dt_fisher_latin$mse_algorithm)
+```
+
+## Tukey-Kramer HSD 
+
+```{r,fig.height=3,fig.width=3}
+HSD=vector("list")
+hsd_group=vector("list")
+msd=vector("list")
+
+
+for(i in 1:length(df_A)){
+   HSD[[i]]=HSD.test(model_A[[i]], "A", group=TRUE)
+   hsd_group[[i]]=HSD[[i]]$groups
+   df_A[[i]]$mse_model=HSD[[i]]$statistics$MSerror
+   msd[[i]]=get_MSD(hsd_group[[i]]$y,hsd_group[[i]]$groups)
+   df_A[[i]]$mse_algorithm= Tukey_MSE(mean(msd[[i]]$n),df_A[[i]]$n.rows,0.05,df_A[[i]]$degrees_freedom,df_A[[i]]$n.trt)
+}
+
+
+dt_tukey_latin=unique(data.frame(mse_model=unlist(lapply(df_A, `[`, 9),use.names = F),
+           mse_algorithm=unlist(lapply(df_A, `[`, 10),use.names = F))) %>% na.omit()
+
+
+lin=CCC(dt_tukey_latin$mse_model,dt_tukey_latin$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+
+cor.test(dt_tukey_latin$mse_model,dt_tukey_latin$mse_algorithm)
+```
+
+
+## Bonferroni
+
+```{r,fig.height=3,fig.width=3}
+means=vector("list")
+msd=vector("list")
+
+
+for(i in 1:length(df_A)){
+   means[[i]]=as.data.table(cld(emmeans(model_A[[i]], pairwise~A),adjust='bonferroni',Letters=letters))
+   msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+   df_A[[i]]$mse_algorithm= Bonferroni_MSE(mean(msd[[i]]$n),df_A[[i]]$n.rows,0.05,df_A[[i]]$degrees_freedom,df_A[[i]]$n.trt)
+}
+
+dt_bon_latin=unique(data.frame(mse_model=unlist(lapply(df_A, `[`, 9),use.names = F),
+           mse_algorithm=unlist(lapply(df_A, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_bon_latin$mse_model,dt_bon_latin$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_bon_latin$mse_model,dt_bon_latin$mse_algorithm)
+```
+
+## Dunn-Sidak 
+```{r,fig.height=3,fig.width=3}
+means=vector("list")
+msd=vector("list")
+
+
+for(i in 1:length(df_A)){
+   means[[i]]=as.data.table(cld(emmeans(model_A[[i]], pairwise~A),adjust='sidak',Letters=letters))
+   msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+   df_A[[i]]$mse_algorithm= Sidak_MSE(mean(msd[[i]]$n),df_A[[i]]$n.rows,0.05,df_A[[i]]$degrees_freedom,df_A[[i]]$n.trt)
+}
+
+dt_sid_latin= unique(data.frame(mse_model=unlist(lapply(df_A, `[`, 9),use.names = F),
+           mse_algorithm=unlist(lapply(df_A, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_sid_latin$mse_model,dt_sid_latin$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_sid_latin$mse_model,dt_sid_latin$mse_algorithm)
+```
+
+## Scheffe
+
+```{r,fig.height=3,fig.width=3}
+means=vector("list")
+msd=vector("list")
+
+for(i in 1:length(df_A)){
+   means[[i]]=as.data.table(cld(emmeans(model_A[[i]], pairwise~A),adjust='scheffe',Letters=letters))
+   msd[[i]]=get_MSD(means[[i]]$emmean,means[[i]]$.group)
+   df_A[[i]]$mse_algorithm= Scheffe_MSE(mean(msd[[i]]$n),df_A[[i]]$n.rows,0.05,df_A[[i]]$degrees_freedom,df_A[[i]]$n.trt)
+}
+
+dt_sch_latin= unique(data.frame(mse_model=unlist(lapply(df_A, `[`, 9),use.names = F),
+           mse_algorithm=unlist(lapply(df_A, `[`, 10),use.names = F))) %>% na.omit()
+
+lin=CCC(dt_sch_latin$mse_model,dt_sch_latin$mse_algorithm, ci = "z-transform", conf.level = 0.95)
+lin$rho.c
+lin$s.shift
+lin$l.shift
+lin$C.b
+cor.test(dt_sch_latin$mse_model,dt_sch_latin$mse_algorithm)
+```
+
+
+```{r,fig.height=3,fig.width=3}
+dt_bon_latin$method="Bonferroni"
+dt_sid_latin$method="Sidak"
+dt_tukey_latin$method="Tukey"
+dt_fisher_latin$method="Fisher"
+dt_sch_latin$method="Scheffe"
+
+
+dt=rbind(dt_bon_latin,dt_fisher_latin,dt_sch_latin,dt_sid_latin,dt_tukey_latin)
+dt$design="latin"
+save(dt, file = "latin.RData")
+
+
+```
+
+```{r}
+
+dt %>% 
+  ggplot(aes(x=mse_model,y=mse_algorithm))+
+  geom_point(alpha=0.1,size=0.8) +
+  labs(x="Actual MSE",y="MSE FindR estimate")+
+  geom_abline(intercept = 0, slope = 1, size = 0.3,linetype = "dashed") +
+  geom_smooth(method='lm', formula= y~x, se = FALSE)+
+  facet_wrap(~method)+
+  theme_bw() +
+  coord_fixed(ratio = 1)+
+  theme(strip.text.y = element_text(size = 4),
+        strip.text.x = element_text(size = 4),
+        axis.text=element_text(size=5))
+
+```
+
+
+```{r Session info}
+sessionInfo()
+```
