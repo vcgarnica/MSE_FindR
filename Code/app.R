@@ -142,7 +142,7 @@ factorial_rcbd_a_fisher_raw="https://raw.githubusercontent.com/vcgarnica/MSE_Fin
 factorial_rcbd_ab_scheffe_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/factorial_rcbd_ab_scheffe.csv"
 sp_rcbd_a_sidak_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/sp_rcbd_a_sidak.csv"
 sp_rcbd_b_bonferroni_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/sp_rcbd_b_bonferroni.csv"
-sp_rcbd_b_within_a_tukey_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/sp_rcbd_b_within_a_tukey.csv"
+sp_rcbd_a_within_b_tukey_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/sp_rcbd_a_within_b_tukey.csv"
 
 
 # Tab Content =========================================================================
@@ -168,7 +168,7 @@ disclosure_tab <- tabItem(
     downloadLink("factorial_rcbd_ab_scheffe", "2-way factorial as a RCBD with Scheffe test (A x B present)"), br(),
     downloadLink("sp_rcbd_a_sidak", "Split-plot as a RCBD with Sidak correction (A mainplot present, B subplot ommitted)"), br(),
     downloadLink("sp_rcbd_b_bonferroni", "Split-plot as a RCBD with Bonferroni correction (A mainplot omitted, B subplot present)"), br(),
-    downloadLink("sp_rcbd_b_within_a_tukey", "Split-plot as a RCBD with Tukey HSD (B subplot within A mainplot present)")),
+    downloadLink("sp_rcbd_a_within_b_tukey", "Split-plot as a RCBD with Tukey HSD (A mainplot within B subplot)")),
   br(),
   h4("Citation"),
   p("Garnica, V.C., Shah, D.A., Esker, P., Ojiambo, P.S. (2022) Got Fisher's LSD or Tukey's HSD?: a R Shiny app tool for recovering variance in designed experiments when only mean and post-hoc tests are reported. APS Meeting, 6-10 August 2022."),
@@ -732,12 +732,12 @@ server <- function(input, output,session) {
       write.csv(read_csv(url(sp_rcbd_b_bonferroni_raw)), file)
     }
   )
-  output$sp_rcbd_b_within_a_tukey <- downloadHandler(
+  output$sp_rcbd_a_within_b_tukey <- downloadHandler(
     filename = function() {
-      paste("sp_rcbd_b_within_a_tukey.csv", sep="")
+      paste("sp_rcbd_a_within_b_tukey.csv", sep="")
     },
     content = function(file) {
-      write.csv(read_csv(url(sp_rcbd_b_within_a_tukey_raw)), file)
+      write.csv(read_csv(url(sp_rcbd_a_within_b_tukey_raw)), file)
     }
   )
   
