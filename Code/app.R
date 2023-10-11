@@ -537,7 +537,7 @@ server <- function(input, output,session) {
             n_factor_B = length(unique(.data[[input$factor_B_sp]])),
             n_replicates = (.data[[input$replicates_sp]])
           )
-      } else if (input$variation_sp == "A within B") {
+      } else if (input$variation_sp == "A (main-plot) within B (sub-plot)") {
         dt <- dt %>%
           dplyr::group_by(.data[[input$trial_id_sp]]) %>%
           dplyr::mutate(
@@ -547,7 +547,7 @@ server <- function(input, output,session) {
           )
       }
       
-      if (input$variation_sp == "A (main-plot") {
+      if (input$variation_sp == "A (main-plot)") {
         if (input$exp_design == "Split-plot as a CRD") {
           dt <- dt %>%
             dplyr::group_by(.data[[input$trial_id_sp]]) %>%
@@ -557,7 +557,7 @@ server <- function(input, output,session) {
             dplyr::group_by(.data[[input$trial_id_sp]]) %>%
             dplyr::mutate(df_error = (n_factor_A - 1) * (n_replicates - 1))
         }
-      } else if (input$variation_sp == "B (sub-plot)" || "A (main-plot) within B (sub-plot)") {
+      } else if (input$variation_sp == "B (sub-plot)" || input$variation_sp == "A (main-plot) within B (sub-plot)") {
         dt <- dt %>%
           dplyr::group_by(.data[[input$trial_id_sp]]) %>%
           dplyr::mutate(df_error = n_factor_A * (n_replicates - 1) * (n_factor_B - 1))
