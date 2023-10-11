@@ -142,7 +142,7 @@ factorial_rcbd_a_fisher_raw="https://raw.githubusercontent.com/vcgarnica/MSE_Fin
 factorial_rcbd_ab_scheffe_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/factorial_rcbd_ab_scheffe.csv"
 sp_rcbd_a_sidak_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/sp_rcbd_a_sidak.csv"
 sp_rcbd_b_bonferroni_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/sp_rcbd_b_bonferroni.csv"
-sp_rcbd_a_within_b_tukey_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/sp_rcbd_a_within_b_tukey.csv"
+sp_rcbd_b_within_a_tukey_raw="https://raw.githubusercontent.com/vcgarnica/MSE_FindR/main/Example%20files/sp_rcbd_b_within_a_tukey.csv"
 
 
 # Tab Content =========================================================================
@@ -166,9 +166,9 @@ disclosure_tab <- tabItem(
     downloadLink("rcbd_fisher", "RCBD with Fisher's LSD test"), br(),
     downloadLink("factorial_rcbd_a_fisher", "2-way factorial as a RCBD with Fisher's LSD (A present, B ommitted)"), br(),
     downloadLink("factorial_rcbd_ab_scheffe", "2-way factorial as a RCBD with Scheffe test (A x B present)"), br(),
-    downloadLink("sp_rcbd_a_sidak", "Split-plot as a RCBD with Sidak correction (A mainplot present, B subplot ommitted)"), br(),
-    downloadLink("sp_rcbd_b_bonferroni", "Split-plot as a RCBD with Bonferroni correction (A mainplot omitted, B subplot present)"), br(),
-    downloadLink("sp_rcbd_a_within_b_tukey", "Split-plot as a RCBD with Tukey HSD (A mainplot within B subplot)")),
+    downloadLink("sp_rcbd_a_sidak", "Split-plot as a RCBD with Sidak correction (A main-plot present, B sub-plot ommitted)"), br(),
+    downloadLink("sp_rcbd_b_bonferroni", "Split-plot as a RCBD with Bonferroni correction (A main-plot omitted, B sub-plot present)"), br(),
+    downloadLink("sp_rcbd_b_within_a_tukey", "Split-plot as a RCBD with Tukey HSD B (sub-plot) within A (main-plot)")),
   br(),
   h4("Citation"),
   p("Garnica, V.C., Shah, D.A., Esker, P., Ojiambo, P.S. (2022) Got Fisher's LSD or Tukey's HSD?: a R Shiny app tool for recovering variance in designed experiments when only mean and post-hoc tests are reported. APS Meeting, 6-10 August 2022."),
@@ -303,7 +303,7 @@ estimator_tab <-  tabItem(tabName = "Estimator",
                                                                                                                             title = "Each trial in designated folder should be assigned a unique value – numerical values only")),NULL),
                                            selectInput("variation_sp", label = tags$span("Source of variation",tags$i(class = "glyphicon glyphicon-info-sign",
                                                                                                                       style = "color:#0072B2;",
-                                                                                                                      title = "When interaction is not significant & comparisons were performed for the main effect (one factor omitted) & were assinged to main-plot units, select A (main-plot). Similarly, when interaction is not significant & comparisons were performed for the main effect (one factor omitted) & were assinged to sub-plot units, select B (sub-plot). When interaction is significant & trials report treatment means and post-hoc test results for the interaction & comparisons were performed among main-plot levels within common subplot levels, select A (main-plot) within B (sub-plot)")),choices = c("A (main-plot)","B (sub-plot)","A (main-plot) within B (sub-plot)")),
+                                                                                                                      title = "When interaction is not significant & comparisons were performed for the main effect (one factor omitted) & were assinged to main-plot units, select A (main-plot). Similarly, when interaction is not significant & comparisons were performed for the main effect (one factor omitted) & were assinged to sub-plot units, select B (sub-plot). When interaction is significant & trials report treatment means and post-hoc test results for the interaction & comparisons were performed among main-plot levels within common subplot levels, select B (sub-plot) within A (main-plot)")),choices = c("A (main-plot)","B (sub-plot)","B (sub-plot) within A (main-plot)")),
                                            conditionalPanel( condition = "input.variation_sp == 'A (main-plot)'", 
                                                              fluidRow(column(8,selectInput("factor_A_sp", label = tags$span("Factor A (main-plot)",tags$i(class = "glyphicon glyphicon-info-sign",
                                                                                                                                                           style = "color:#0072B2;",
@@ -318,7 +318,7 @@ estimator_tab <-  tabItem(tabName = "Estimator",
                                                              fluidRow(column(8,selectInput("factor_B_sp", label = tags$span("Factor B (sub-plot)",tags$i(class = "glyphicon glyphicon-info-sign",
                                                                                                                                                          style = "color:#0072B2;",
                                                                                                                                                          title = "Column for factor B treatments assigned to the sub-plot units – either numerical or categorical")),NULL)))),                                       
-                                           conditionalPanel( condition = "input.variation_sp == 'A (main-plot) within B (sub-plot)'", 
+                                           conditionalPanel( condition = "input.variation_sp == 'B (sub-plot) within A (main-plot)'", 
                                                              fluidRow(column(8,selectInput("factor_A_sp_ab", label = tags$span("Factor A (main-plot)",tags$i(class = "glyphicon glyphicon-info-sign",
                                                                                                                                                              style = "color:#0072B2;",
                                                                                                                                                              title = "Column for factor A treatments assigned to the main-plot units – either numerical or categorical")),NULL))),
@@ -537,7 +537,7 @@ server <- function(input, output,session) {
             n_factor_B = length(unique(.data[[input$factor_B_sp]])),
             n_replicates = (.data[[input$replicates_sp]])
           )
-      } else if (input$variation_sp == "A (main-plot) within B (sub-plot)") {
+      } else if (input$variation_sp == "B (sub-plot) within A (main-plot)") {
         dt <- dt %>%
           dplyr::group_by(.data[[input$trial_id_sp]]) %>%
           dplyr::mutate(
@@ -557,7 +557,7 @@ server <- function(input, output,session) {
             dplyr::group_by(.data[[input$trial_id_sp]]) %>%
             dplyr::mutate(df_error = (n_factor_A - 1) * (n_replicates - 1))
         }
-      } else if (input$variation_sp == "B (sub-plot)" || input$variation_sp == "A (main-plot) within B (sub-plot)") {
+      } else if (input$variation_sp == "B (sub-plot)" || input$variation_sp == "B (sub-plot) within A (main-plot)") {
         dt <- dt %>%
           dplyr::group_by(.data[[input$trial_id_sp]]) %>%
           dplyr::mutate(df_error = n_factor_A * (n_replicates - 1) * (n_factor_B - 1))
@@ -645,7 +645,7 @@ server <- function(input, output,session) {
                                                "Sidak correction for multiple comparison" = Sidak_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_B, n_factor_A),
                                                "Scheffe's" = Scheffe_MSE_ab(msd, n_replicates, input$alpha, df_error, n_factor_B, n_factor_A)
                        ),
-                       "A (main-plot) within B (sub-plot)" = switch(input$mean_sep,
+                       "B (sub-plot) within A (main-plot)" = switch(input$mean_sep,
                                                                     "Fisher's LSD" = Fisher_MSE(msd, n_replicates, input$alpha, df_error),
                                                                     "Tukey's HSD" = Tukey_MSE(msd, n_replicates, input$alpha, df_error, n_factor_B),
                                                                     "Bonferroni correction for multiple comparison" = Bonferroni_MSE(msd, n_replicates, input$alpha, df_error, n_factor_B),
@@ -732,12 +732,12 @@ server <- function(input, output,session) {
       write.csv(read_csv(url(sp_rcbd_b_bonferroni_raw)), file)
     }
   )
-  output$sp_rcbd_a_within_b_tukey <- downloadHandler(
+  output$sp_rcbd_b_within_a_tukey <- downloadHandler(
     filename = function() {
-      paste("sp_rcbd_a_within_b_tukey.csv", sep="")
+      paste("sp_rcbd_b_within_a_tukey.csv", sep="")
     },
     content = function(file) {
-      write.csv(read_csv(url(sp_rcbd_a_within_b_tukey_raw)), file)
+      write.csv(read_csv(url(sp_rcbd_b_within_a_tukey_raw)), file)
     }
   )
   

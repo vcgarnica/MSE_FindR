@@ -199,16 +199,16 @@ When the `A × B` interaction **is not significant** in primary studies and we w
 
 When the `A × B` interaction **is significant** in primary studies and we want to obtain:
 
-3. $\hat\sigma^2$ from comparisons among A levels (main-plot) within B levels (sub-plot) - (`A within B`)
-4. $\hat\sigma^2$ from comparisons among B levels (sub-plot) within A levels (main-plot) - (`B within A`)
+3. $\hat\sigma^2$ from comparisons among B levels (sub-plot) within A levels (main-plot) - (`B within A`)
+4. $\hat\sigma^2$ from comparisons among A levels (main-plot) within B levels (sub-plot) - (`A within B`)
 5. $\hat\sigma^2$ from mixed comparisons: Comparisons between B (sub-plot) levels across different A levels (main-plot) - `mixed`
 
 
-`MSE FindR` CAN ONLY compute $\hat\sigma^2$ for scenarios **1, 2, and 3** . For scenario 5, $\hat\sigma^2$ consists of a weighted average between $\hat\sigma^2_A$ (main-plot error) and $\hat\sigma^2_B$ (sub-plot error), which is considerably more complex to obtain. We do not cover technical details of scenarios 4 and 5, however, we urge users to be aware whether $\hat\sigma^2$ is being obtained from comparisons in main or sub-plot because mispecifications can result in severely wrong $\hat\sigma^2$ calculations.
+`MSE FindR` CAN ONLY compute $\hat\sigma^2$ for scenarios **1, 2, and 3** . For scenario 5, $\hat\sigma^2$ consists of a weighted average between $\hat\sigma^2_A$ (main-plot error) and $\hat\sigma^2_B$ (sub-plot error), which is considerably more complex to obtain. We do not cover technical details of scenarios 4 and 5, however, we urge users to be aware whether $\hat\sigma^2$ is being obtained from comparisons in main or sub-plot because mispecifications can result in severely wrong $\hat\sigma^2$ calculations. A good resource to understand more of these designs can be found [here](https://psfaculty.plantsciences.ucdavis.edu/agr205/Lectures/2011_Lectures/L12a_SplitPlot.pdf).
 
 As mentioned before, collating trial data into the CSV input file for split-plot designs is identical to that of two-way factorial designs. However, users must be mindful of whether the main effect comparisons or source of variation was assigned to factor `A` (main-plot) or `B` (sub-plot) units. When `A × B` interaction **is significant**, only one scenario for $\hat\sigma^2$ extraction can be performed.
 
-Downloadable example files to assist with the collation process can be found in the `MSE FindR` app. For additional information on estimating for split-plot designs, check [this](https://psfaculty.plantsciences.ucdavis.edu/agr205/Lectures/2011_Lectures/L12a_SplitPlot.pdf). 
+Downloadable example files to assist with the collation process can be found in the `MSE FindR` app. Again, for additional information on estimating for split-plot designs, check [this](https://psfaculty.plantsciences.ucdavis.edu/agr205/Lectures/2011_Lectures/L12a_SplitPlot.pdf). 
 
 
 ### Step 3 - Upload the CSV file
