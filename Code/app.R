@@ -1,7 +1,4 @@
-# SHINY DASHBOARD - MSE_Finder
-
-# A tool for estimating the pooled standard deviation (a.i. mean square error (MSE) from ANOVAs) 
-# from published literature using available information. Assumes constant variance and treatments have the same number of replications.
+# SHINY DASHBOARD - MSE FINDR
 
 
 # Packages library =================================================
@@ -179,8 +176,19 @@ disclosure_tab <- tabItem(
   h4("Disclaimer"),
   p("MSE FindR was developed to help researchers from multiple disciplines estimate the MSE from balanced experiments supported by the platform. 
     We welcome feedback and suggestions about the usefulness of the application and make no guarantee of the correctness, reliability, or utility 
-    of the results if incorrect selections are made during the steps of MSE estimation. MSE FindR is freely accessible, and the source code is hosted at https://github.com/vcgarnica/MSE-FindR.")
-)
+    of the results if incorrect selections are made during the steps of MSE estimation. MSE FindR is freely accessible, and the source code is hosted at https://github.com/vcgarnica/MSE-FindR."),
+  br(),
+  h4("License"),
+  p("MIT License"),
+  br(), 
+  p("Copyright (c) 2022 Vinicius Garnica"),
+  br(),
+  p("Permission is hereby granted, free of charge, to any person obtaining a copyof this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:"),
+  br(),
+  p("The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software."),
+  br(),
+  p("THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.")
+  )
 
 
 

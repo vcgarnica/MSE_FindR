@@ -1,6 +1,5 @@
 ---
 title: "Simulations for Randomized Complete Block Design"
-author: "Vinicius C. Garnica and Denis A. Shah"
 date: "2/7/2023"
 output:
   pdf_document: default

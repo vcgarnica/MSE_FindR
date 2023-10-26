@@ -1,6 +1,5 @@
 ---
 title: "Simulations for Factorial Design arranged as CRD"
-author: "Vinicius C. Garnica and Denis A. Shah"
 date: "2/8/2023"
 output:
   pdf_document: default
