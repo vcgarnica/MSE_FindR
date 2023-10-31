@@ -148,15 +148,15 @@ sp_rcbd_b_within_a_tukey_raw="https://raw.githubusercontent.com/vcgarnica/MSE_Fi
 
 disclosure_tab <- tabItem(
   tabName = "Disclosure",
-  img(src = "logo.png", height =80, width = 290,style="display: block; margin-left: auto; margin-right: auto;"),
+  img(src = "logo.png", height =150, width = 500,style="display: block; margin-left: auto; margin-right: auto;"),
   br(),
-  p("MSE FindR is a R Shiny application developed to help researchers obtain estimates of the mean square error (MSE) from balanced studies reporting treatment means and post hoc letter results."),
-  p("Developed collaboratively by plant pathologists from North Carolina State University, Pennsylvania State University, and Kansas State University, MSE FindR supports a variety of experimental designs and post hoc tests,
+  p("MSE FINDR is a R Shiny application developed to help researchers obtain estimates of the mean square error (MSE) from balanced studies reporting treatment means and post hoc letter results."),
+  p("Developed collaboratively by plant pathologists from North Carolina State University, Pennsylvania State University, and Kansas State University, MSE FINDR supports a variety of experimental designs and post hoc tests,
     including Fisher’s LSD, Tukey’s HSD, Scheffé's test, Bonferroni, and Šidák corrections for multiple comparisons."),
   br(),
   h4("Tutorial"),
   p("A comprehensive evaluation of the tool and a walk-through tutorial
-      on how to use MSE FindR can be found", tags$a(href="https://github.com/vcgarnica/MSE_FindR","here.")),
+      on how to use MSE FINDR can be found", tags$a(href="https://anonymous.4open.science/r/MSE_FindR-CFF5","here.")),
   br(),
   h4("Example files"),
   p(downloadLink("latin_fisher", "Latin Square with Fisher's LSD test"), br(),
@@ -168,22 +168,22 @@ disclosure_tab <- tabItem(
     downloadLink("sp_rcbd_b_within_a_tukey", "Split-plot as a RCBD with Tukey HSD B (sub-plot) within A (main-plot)")),
   br(),
   h4("Citation"),
-  p("Garnica, V.C., Shah, D.A., Esker, P., Ojiambo, P.S. (2022) Got Fisher's LSD or Tukey's HSD?: a R Shiny app tool for recovering variance in designed experiments when only mean and post-hoc tests are reported. APS Meeting, 6-10 August 2022."),
+  p("Anonymous (202x). MSE FINDR: A Shiny R application to estimate mean square error using treatment means and post-hoc test results. Submitted. doi: XXXX/XXXX 2023."),
   br(),
   h4("Credits"),
-  p("Vinicius C. Garnica (garnica.vinicius@gmail.com), Denis A. Shah (denisshah2331@gmail.com), Paul D. Esker (pde6@psu.edu), and Peter S. Ojiambo (pojiamb@ncsu.edu)."),
+  p("Anonymous 1 (xxxx@gmail.com), Anonymous 2 (xxxx@gmail.com), Anonymous 3 (xxxx@psu.edu), and Anonynous 4 (xxxx@ncsu.edu)."),
   br(),
   h4("Disclaimer"),
-  p("MSE FindR was developed to help researchers from multiple disciplines estimate the MSE from balanced experiments supported by the platform. 
+  p("MSE FINDR was developed to help researchers from multiple disciplines estimate the MSE from balanced experiments supported by the platform. 
     We welcome feedback and suggestions about the usefulness of the application and make no guarantee of the correctness, reliability, or utility 
-    of the results if incorrect selections are made during the steps of MSE estimation. MSE FindR is freely accessible, and the source code is hosted at https://github.com/vcgarnica/MSE-FindR."),
+    of the results if incorrect selections are made during the steps of MSE estimation. MSE FINDR is freely accessible, and the source code is hosted at https://github.com/vcgarnica/MSE-FindR."),
   br(),
   h4("License"),
   p("MIT License"),
   br(), 
-  p("Copyright (c) 2022 Vinicius Garnica"),
+  p("Copyright (c) 2022"),
   br(),
-  p("Permission is hereby granted, free of charge, to any person obtaining a copyof this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:"),
+  p("Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:"),
   br(),
   p("The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software."),
   br(),
@@ -394,7 +394,7 @@ body_content <- dashboardBody(
 
 ui <-  dashboardPage(
   
-  dashboardHeader(title = "MSE FindR"),
+  dashboardHeader(title = "MSE FINDR"),
   ## Sidebar content
   sideBar_content,
   ## Body content

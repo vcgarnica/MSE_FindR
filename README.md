@@ -1,27 +1,28 @@
 #  `MSE FINDR` 
 
 <!--Badges: starts-->
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10045103.svg)](https://doi.org/10.5281/zenodo.10045103)
+[![DOI](https://zenodo.org/badge/DOI/xxxxxx.svg)](https://doi.org/xxxxxx)
 <!--Badges: end-->
+
 
 ## Description
 
-This repository contains the companion code and the associated shiny app `MSE FINDR`  of Garnica et al. (2023, in prep.). It contains the associated figures of the paper, example files, instructions, as well as the simulation code used in the paper.
+This repository contains the companion code and the associated shiny app `MSE FINDR` of Anonymous et al. (2023, in prep.). It contains the associated figures of the paper, example files, instructions, as well as the simulation code used in the paper.
 
 
 ## Citation
 
 This repository is associated with the following article:
 
-> Garnica C. V., Shah D. A., Esker D. P., and Ojiambo P. S. MSE FINDR: A Shiny R application to estimate mean square error using treatment means and post-hoc test results. Submitted. doi: XXXX/XXXX 2023.
+> Anonymous (202x). MSE FINDR: A Shiny R application to estimate mean square error using treatment means and post-hoc test results. Submitted. doi: XXXX/XXXX 2023.
 
 The code versions available in this repository have been archived on Zenodo: 
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10045103.svg)](https://doi.org/10.5281/zenodo.10045103)
+[![DOI](https://zenodo.org/badge/DOI/xxxxxx.svg)](https://doi.org/xxxxxx)
 
 To access the most up-to-date version, please refer to the DOI provided above. You can also use the following citation for this repository:
 
-> Garnica C. V., Shah D. A., Esker D. P., and Ojiambo P. S. (2023, October 26). MSE FINDR: Submitted version (Version submitted). Zenodo. https://doi.org/10.5281/zenodo.10045103.
+> Anonymous (2023, October 26). MSE FINDR. Zenodo. https://doi.org/xxxxxx.
 
 
 # Tutorial 
@@ -269,7 +270,7 @@ Montgomery, D.C., 2017. Design and analysis of experiments. John Wiley & Sons.
 
 MIT License
 
-Copyright (c) 2022 Vinicius Garnica
+Copyright (c) 2022
 
 Permission is hereby granted, free of charge, to any person obtaining a copyof this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
