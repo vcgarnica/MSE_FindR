@@ -1,10 +1,5 @@
 #  `MSE FINDR` 
 
-<!--Badges: starts-->
-[![DOI](https://zenodo.org/badge/DOI/xxxxxx.svg)](https://doi.org/xxxxxx)
-<!--Badges: end-->
-
-
 ## Description
 
 This repository contains the companion code and the associated shiny app `MSE FINDR` of Anonymous et al. (2023, in prep.). It contains the associated figures of the paper, example files, instructions, as well as the simulation code used in the paper.
@@ -15,14 +10,6 @@ This repository contains the companion code and the associated shiny app `MSE FI
 This repository is associated with the following article:
 
 > Anonymous (202x). MSE FINDR: A Shiny R application to estimate mean square error using treatment means and post-hoc test results. Submitted. doi: XXXX/XXXX 2023.
-
-The code versions available in this repository have been archived on Zenodo: 
-
-[![DOI](https://zenodo.org/badge/DOI/xxxxxx.svg)](https://doi.org/xxxxxx)
-
-To access the most up-to-date version, please refer to the DOI provided above. You can also use the following citation for this repository:
-
-> Anonymous (2023, October 26). MSE FINDR. Zenodo. https://doi.org/xxxxxx.
 
 
 # Tutorial 
