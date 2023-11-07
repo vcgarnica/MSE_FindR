@@ -9,7 +9,7 @@ This repository contains the companion code and the associated shiny app `MSE FI
 
 This repository is associated with the following article:
 
-> Anonymous (202x). MSE FINDR: A Shiny R application to estimate mean square error using treatment means and post-hoc test results. Submitted. doi: XXXX/XXXX 2023.
+> Anonymous (202x). MSE FINDR: A Shiny R application to estimate mean square error using treatment means and post-hoc test results. Submitted. doi: XXXX/XXXX.
 
 
 # Tutorial 
