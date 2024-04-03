@@ -167,7 +167,7 @@ disclosure_tab <- tabItem(
     downloadLink("sp_rcbd_b_within_a_tukey", "Split-plot as a RCBD with Tukey HSD B (sub-plot) within A (main-plot)")),
   br(),
   h4("Citation"),
-  p("Garnica, V. C., Shah, D. A., Esker, P. D., Ojiambo, P. S. (202x). MSE FINDR: A Shiny R application to estimate mean square error using treatment means and post-hoc test results. In preparation. doi: XXXX/XXXX."),
+  p("Garnica, V. C., Shah, D. A., Esker, P. D., Ojiambo, P. S. (2024). MSE FINDR: A Shiny R Application to Estimate Mean Square Error Using Treatment Means and Post-hoc Test Results. Plant Disease. doi: 10.1094/PDIS-11-23-2519-SR."),
   br(),
   h4("Credits"),
   p("Vinicius Garnica (garnica.vinicius@gmail.com), Denis Shah (denisshah2331@gmail.com), Paul Esker (pde6@psu.edu), and Peter Ojiambo (pojiamb@ncsu.edu)."),

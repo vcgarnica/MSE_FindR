@@ -9,9 +9,7 @@ This repository contains the companion code and the associated shiny app `MSE FI
 
 This repository is associated with the following article:
 
-> Garnica, V. C., Shah, D. A., Esker, P. D., Ojiambo, P. S. (2024). MSE FINDR: A Shiny R application to estimate mean square error using treatment means and post-hoc test results. Accepted Plant Disease. doi: XXXX/XXXX.
-
-> Garnica, V. C., Shah, D. A., Esker, P. D., Ojiambo, P. S. (2022). Got Fisher’s LSD or Tukey’s HSD?: a R Shiny app tool for recovering variance in designed experiments when only mean and post-hoc tests are reported, Available online:, in: APS Meeting, 6-10 August 2022 https://garnica.shinyapps.io/MSE_FindR/.
+> Garnica, V. C., Shah, D. A., Esker, P. D., Ojiambo, P. S. (2024). MSE FINDR: A Shiny R Application to Estimate Mean Square Error Using Treatment Means and Post-hoc Test Results. Plant Disease. doi: [10.1094/PDIS-11-23-2519-SR](https://apsjournals.apsnet.org/doi/abs/10.1094/PDIS-11-23-2519-SR?journalCode=pdis).
 
 # Tutorial 
 
