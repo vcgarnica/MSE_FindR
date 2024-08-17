@@ -2,14 +2,14 @@
 
 ## Description
 
-This repository contains the companion code and the associated shiny app `MSE FINDR` of Garnica et al. (2024, accepted Plant Disease). It contains the associated figures of the paper, example files, instructions, as well as the simulation code used in the paper.
+This repository contains the companion code and the associated shiny app `MSE FINDR` of Garnica et al. (2024). It contains the associated figures of the paper, example files, instructions, as well as the simulation code used in the paper.
 
 
 ## Citation
 
 This repository is associated with the following article:
 
-> Garnica, V. C., Shah, D. A., Esker, P. D., Ojiambo, P. S. (2024). MSE FINDR: A Shiny R Application to Estimate Mean Square Error Using Treatment Means and Post-hoc Test Results. Plant Disease. doi: [10.1094/PDIS-11-23-2519-SR](https://apsjournals.apsnet.org/doi/abs/10.1094/PDIS-11-23-2519-SR?journalCode=pdis).
+> Garnica, V. C., Shah, D. A., Esker, P. D., Ojiambo, P. S. (2024). MSE FINDR: A Shiny R Application to Estimate Mean Square Error Using Treatment Means and Post-hoc Test Results. Plant Disease. doi: [10.1094/PDIS-11-23-2519-SR](https://apsjournals.apsnet.org/doi/epdf/10.1094/PDIS-11-23-2519-SR).
 
 # Tutorial 
 
