@@ -1,7 +1,5 @@
 #  `MSE FINDR` 
 
-## Description
-
 This repository contains the companion code and the associated shiny app `MSE FINDR` of Garnica et al. (2024). It contains the associated figures of the paper, example files, instructions, as well as the simulation code used in the paper.
 
 
@@ -11,8 +9,6 @@ This repository is associated with the following article:
 
 > Garnica, V. C., Shah, D. A., Esker, P. D., Ojiambo, P. S. (2024). MSE FINDR: A Shiny R Application to Estimate Mean Square Error Using Treatment Means and Post-hoc Test Results. Plant Disease. doi: [10.1094/PDIS-11-23-2519-SR](https://apsjournals.apsnet.org/doi/epdf/10.1094/PDIS-11-23-2519-SR).
 
-# Tutorial 
-
 ## Introduction
 
 Meta-analysis and multi-environmental trial analysis are methodologies used to synthesize the results of multiple independent studies to provide an overall estimate of a treatment effect. In the absence of individual study data (also known as raw data), standard meta-analytic approaches for continuous outcomes rely on reported summary metrics, such as treatment mean and a corresponding measure of variability (e.g., the sample standard deviation and standard error values for each treatment group). This is because effect sizes in these analyses are typically weighted by the study's precision, most commonly by the inverse of the study variance or other variability metric. A common complication arises when none of these summary variability metrics are explicitly included in the primary studies.
@@ -21,7 +17,7 @@ Meta-analysis and multi-environmental trial analysis are methodologies used to s
 
 The application is hosted at [https://garnica.shinyapps.io/MSE_FindR/](https://garnica.shinyapps.io/MSE_FindR/).
 
-`MSE FINDR` expands on concepts published in [Ngugi et al., 2011](https://apsjournals.apsnet.org/doi/abs/10.1094/PHYTO-08-10-0221) by incorporating additional post-hoc tests (also known as multiple comparison tests obtained from "agricolae," "emmeans," and "multcomp" R packages) and a variety of experimental designs commonly used in ecology and agricultural sciences. It also improves on [Ngugi et al., 2011](https://apsjournals.apsnet.org/doi/abs/10.1094/PHYTO-08-10-0221) by incorporating the correct distribution and degrees of freedom for underlying post-hoc test used in primary study analysis.
+`MSE FINDR` expands on concepts published in [Ngugi et al., 2011](https://apsjournals.apsnet.org/doi/abs/10.1094/PHYTO-08-10-0221) by incorporating additional post-hoc tests (also known as multiple comparison tests obtained from `agricolae`, `emmeans`, and `multcomp` R packages) and a variety of experimental designs commonly used in ecology and agricultural sciences. It also improves on [Ngugi et al., 2011](https://apsjournals.apsnet.org/doi/abs/10.1094/PHYTO-08-10-0221) by incorporating the correct distribution and degrees of freedom for underlying post-hoc test used in primary study analysis.
 
 In its current version, `MSE FINDR` supports the extraction of $\hat\sigma^2$ for the following experimental designs:
 
@@ -41,25 +37,43 @@ And post-hoc tests:
 - Šidák correction for multiple comparisons
 - Scheffé's test
 
-`MSE FINDR` contains three main modules: Disclosure, Upload file, and Estimator, to help users navigate through the tool's functionalities and conveniently obtain $\hat\sigma^2$ for multiple trials at a time (Figure 1).
+`MSE FINDR` contains four main modules: **Disclosure**, **Upload file**, **Estimator**, and **Usage Statistics**, to help users navigate through the tool's functionalities and conveniently obtain $\hat\sigma^2$ for multiple trials at a time (Figure 1).
 
 ![legend](https://github.com/vcgarnica/MSE_FindR/blob/main/Images/workflow.png)
 Figure 1. `MSE FINDR` conceptual flowchart highlighting the inputs and estimation for randomized complete block designs analyzed with Fisher's LSD test.
 
+# Tutorial 
+
 ## `MSE FINDR`: Disclosure
 
-Contains a walk-through tutorial, downloadable example files, information about developers, and citation.
+The Disclosure module serves as the landing page of the application and provides:
+
+- A **Quick Start Guide** with step-by-step instructions and links to tutorial sections
+- An overview of **Key Features**, including supported experimental designs and post-hoc tests
+- **Downloadable example files** for all supported design/test combinations
+- A **"Load Example Data"** button that allows users to preview and load example datasets directly into the application without downloading and re-uploading CSV files
+- Citation information, development team contacts, and licensing details
 
 ## `MSE FINDR`: Upload CSV file
 
 In this module, users can upload a CSV file that contains trial-specific information. Columns in the CSV input file may vary depending on the design and structure of the study. Below, you will find detailed instructions on how to gather trial data and collate into the CSV input file. The application exclusively supports standard CSV formats, with default settings utilizing commas as separators and double quotes. Nevertheless, these settings can be adjusted to align with the format of your CSV data file.
 
+Users can also arrive at this module automatically after loading an example dataset from the Disclosure page, in which case the example data will already be displayed in the data table.
+
 ## `MSE FINDR`: Estimator
 
 After pre-processing a CSV file using the `MSE FINDR` tutorial below and uploading it into the application, users can calculate $\hat\sigma^2$ by assigning columns of the CSV file, named at the user's preferences, to the appropriate selection fields. Note that a proper assignment of columns to the respective selection fields is a critical step for correct $\hat\sigma^2$ extraction. Once columns have been properly assigned and the estimate button is clicked, a download button will appear allowing users to export the results in a CSV output file. The `MSE FINDR` application calculates a trial-specific value for $\hat\sigma^2$ along with its associated degrees of freedom.
 
-## Workflow
+The Estimator module now includes a dynamic **Instructions panel** that updates based on the selected experimental design. This panel displays the required CSV columns for the chosen design and provides important warnings — particularly for split-plot designs, where misspecification of the source of variation (main-plot vs. sub-plot) will result in incorrect MSE estimates.
 
+## `MSE FINDR`: Usage Statistics
+
+The Usage Statistics module provides real-time information about the reach and impact of the tool, including:
+
+- **Total visitor count** — a persistent counter tracking the number of unique sessions since January 2026
+- **Live citation count** — powered by the [Dimensions.ai](https://www.dimensions.ai/) badge, displaying the current number of citations for the associated publication in real-time
+
+## Workflow
 
 ### Step 1 - Compile trials with the same information
 
@@ -103,6 +117,8 @@ With the appropriately organized folders in place, it is now time to understand 
 * Corresponding post-hoc test letter results
 
 In the next sections, we explain how this basic structure changes across experimental designs.
+
+> **Tip:** You can use the **"Load Example Data"** button on the Disclosure page to load and preview example datasets for each supported design directly within the application, without needing to download and re-upload files.
 
 #### 2.1. Latin square
 
@@ -219,6 +235,8 @@ When the `A × B` interaction **is significant** in primary studies and we want 
 
 `MSE FINDR` CAN ONLY compute $\hat\sigma^2$ for scenarios **1, 2, and 3** . For scenario 5, $\hat\sigma^2$ consists of a weighted average between $\hat\sigma^2_A$ (main-plot error) and $\hat\sigma^2_B$ (sub-plot error), which is considerably more complex to obtain. We do not cover technical details of scenarios 4 and 5, however, we urge users to be aware whether $\hat\sigma^2$ is being obtained from comparisons in main or sub-plot because mispecifications can result in severely wrong $\hat\sigma^2$ calculations. A good resource to understand more of these designs can be found [here](https://psfaculty.plantsciences.ucdavis.edu/agr205/Lectures/2011_Lectures/L12a_SplitPlot.pdf).
 
+> **Note:** The Estimator module includes a dynamic Instructions panel that displays a prominent warning when split-plot designs are selected, reminding users that main-plot and sub-plot assignments are not interchangeable and that misspecification will result in incorrect MSE estimates.
+
 As mentioned before, collating trial data into the CSV input file for split-plot designs is identical to that of two-way factorial designs. However, users must be mindful of whether the main effect comparisons or source of variation was assigned to factor `A` (main-plot) or `B` (sub-plot) units. When `A × B` interaction **is significant**, only one scenario for $\hat\sigma^2$ extraction can be performed.
 
 Downloadable example files to assist with the collation process can be found in the `MSE FINDR` app. Again, for additional information on estimating for split-plot designs, check [this](https://psfaculty.plantsciences.ucdavis.edu/agr205/Lectures/2011_Lectures/L12a_SplitPlot.pdf). 
@@ -228,6 +246,8 @@ Downloadable example files to assist with the collation process can be found in 
 
 In this step, users upload the processed CSV input file containing the all required information, as described above. 
 
+Alternatively, users can skip this step by using the **"Load Example Data"** button on the Disclosure page to load a pre-formatted example dataset directly into the application. This is useful for exploring the tool's functionality before preparing your own CSV file.
+
 
 ### Step 4 - Make field selections and estimate
 
@@ -235,7 +255,7 @@ Once the trial data has been appropriately organized in the CSV input file and u
 
 As users select different experimental designs in the design box, the selection fields in the column assignment box will be updated dynamically. This ensures that the appropriate options are presented based on the chosen experimental design. To proceed successfully, users must ensure that the columns in the CSV input file are correctly matched with their corresponding selection fields in the column assignment box.
 
-To assist users with the matching process, info signs are available in the toll, providing additional information on column matching and ensuring a smooth and accurate setup.
+To assist users with the matching process, info signs are available in the tool, providing additional information on column matching and ensuring a smooth and accurate setup.
 
 ### Step 6 - Export file
 
@@ -256,9 +276,9 @@ Montgomery, D.C., 2017. Design and analysis of experiments. John Wiley & Sons.
 
 MIT License
 
-Copyright (c) 2022 Vinicius Garnica and others
+Copyright (c) 2022–2026 Vinicius Garnica and others
 
-Permission is hereby granted, free of charge, to any person obtaining a copyof this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
