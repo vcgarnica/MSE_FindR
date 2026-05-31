@@ -14,48 +14,6 @@ library("rvest")
 library("stringr")
 
 # ============================================================================
-# GOOGLE SHEETS VISITOR COUNTER - SETUP INSTRUCTIONS
-# ============================================================================
-# 1. Create a new Google Sheet
-# 2. In cell A1 type: count   |   In cell A2 type: 0
-# 3. Go to File > Share > Publish to web (this makes it readable)
-# 4. Also click Share > "Anyone with the link" > set to "Editor"
-#    (this allows the app to write to it)
-# 5. Copy the Sheet ID from the URL:
-#    https://docs.google.com/spreadsheets/d/SHEET_ID_HERE/edit
-# 6. Paste it below:
-# ============================================================================
-
-GSHEET_ID <- "YOUR_GOOGLE_SHEET_ID_HERE"  # <-- REPLACE THIS
-
-# Helper functions for Google Sheets counter (no auth needed for public sheets)
-get_visitor_count <- function(sheet_id) {
-  tryCatch({
-    url <- paste0(
-      "https://docs.google.com/spreadsheets/d/", sheet_id,
-      "/gviz/tq?tqx=out:csv"
-    )
-    data <- read.csv(url(url), stringsAsFactors = FALSE)
-    count <- as.numeric(data[1, 1])
-    if (is.na(count)) 0 else count
-  }, error = function(e) {
-    message("Could not read visitor count from Google Sheets: ", e$message)
-    # Fall back to local file
-    count_file <- "visitor_count.txt"
-    if (file.exists(count_file)) as.numeric(readLines(count_file, warn = FALSE)) else 0
-  })
-}
-
-update_visitor_count <- function(sheet_id, new_count) {
-  tryCatch({
-    count_file <- "visitor_count.txt"
-    writeLines(as.character(new_count), count_file)
-  }, error = function(e) {
-    message("Could not update visitor count: ", e$message)
-  })
-}
-
-# ============================================================================
 
 APPS_SCRIPT_URL <- "https://script.google.com/macros/s/AKfycbyrgIGJ0rRArn4LtdzeAeOlosQMtvMRzcX2O5RtwDfJO_loRL0z7v4sRsinhr47mU6J/exec"
 
@@ -71,10 +29,14 @@ get_count_from_api <- function() {
   }
   
   tryCatch({
-    res <- httr::GET(paste0(APPS_SCRIPT_URL, "?action=get"), 
-                     httr::timeout(5))
-    if (httr::status_code(res) == 200) {
-      data <- jsonlite::fromJSON(httr::content(res, "text", encoding = "UTF-8"))
+    res <- httr::GET(paste0(APPS_SCRIPT_URL, "?action=get"),
+                     httr::timeout(10),
+                     config = httr::config(followlocation = TRUE))
+    body <- httr::content(res, "text", encoding = "UTF-8")
+    message("Counter get status: ", httr::status_code(res),
+            " | body: ", substr(body, 1, 200))
+    data <- tryCatch(jsonlite::fromJSON(body), error = function(e) NULL)
+    if (!is.null(data) && !is.null(data$count)) {
       return(as.numeric(data$count))
     }
     return(0)
@@ -96,10 +58,14 @@ increment_count_api <- function() {
   }
   
   tryCatch({
-    res <- httr::GET(paste0(APPS_SCRIPT_URL, "?action=increment"), 
-                     httr::timeout(5))
-    if (httr::status_code(res) == 200) {
-      data <- jsonlite::fromJSON(httr::content(res, "text", encoding = "UTF-8"))
+    res <- httr::GET(paste0(APPS_SCRIPT_URL, "?action=increment"),
+                     httr::timeout(10),
+                     config = httr::config(followlocation = TRUE))
+    body <- httr::content(res, "text", encoding = "UTF-8")
+    message("Counter increment status: ", httr::status_code(res),
+            " | body: ", substr(body, 1, 200))
+    data <- tryCatch(jsonlite::fromJSON(body), error = function(e) NULL)
+    if (!is.null(data) && !is.null(data$count)) {
       return(as.numeric(data$count))
     }
     return(NULL)
@@ -895,7 +861,10 @@ server <- function(input, output, session) {
   observe({
     if (is.null(session$userData$counted)) {
       new_count <- increment_count_api()
-      if (!is.null(new_count)) {
+      if (is.null(new_count)) {
+        new_count <- get_count_from_api()   # fall back to a plain read
+      }
+      if (!is.null(new_count) && length(new_count) == 1 && !is.na(new_count)) {
         visitor_count(new_count)
       }
       session$userData$counted <- TRUE
